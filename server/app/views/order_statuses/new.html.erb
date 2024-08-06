@@ -1,0 +1,21 @@
+<div class="container">
+  <h1 class="text-center">New Order Status</h1>
+  <%= form_with model: @order_status, url: order_statuses_path do |form| %>
+    <table class="table table-bordered">
+      <tr>
+        <th><%= form.label :name %></th>
+        <td><%= form.select :name, ['pending', 'in progress', 'delivered'], class: "form-control" %></td>
+      </tr>
+    </table>
+
+    <div class="buttons">
+      <%= form.button type: :submit, class: "btn btn-primary" do %>
+        <i class="fa-solid fa-pen-to-square"></i>Create Order Status
+      <% end %>
+      |
+      <%= link_to order_statuses_path, class: "btn btn-secondary" do %>
+        <i class="fa-solid fa-reply"></i>Back
+      <% end %>
+    </div>
+  <% end %>
+</div>

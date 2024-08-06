@@ -1,0 +1,34 @@
+<div class="container">
+  <table class="table table-bordered">
+    <tr>
+      <th>Name</th>
+      <td><%= @product.name %></td>
+    </tr>
+    <tr>
+      <th>Restaurant</th>
+      <td><%= @product.restaurant.name %></td>
+    </tr>
+    <tr>
+      <th>Description</th>
+      <td><%= @product.description %></td>
+    </tr>
+    <tr>
+      <th>Cost</th>
+      <td><%= @product.cost %></td>
+    </tr>
+    <tr>
+      <th>Price Range</th>
+      <td><%= @product.price_range %></td>
+    </tr>
+  </table>
+
+  <div class="buttons">
+    <%= link_to edit_product_path(@product), class: "btn btn-primary" do %>
+      <i class="fa fa-pencil"></i>Edit
+    <% end %>
+    |
+    <%= link_to products_path, class: "btn btn-secondary" do %>
+      <i class="fa-solid fa-reply"></i>Back
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+<div class="container">
+  <h1 class="text-center">New Address</h1>
+  <%= form_with model: @address, url: addresses_path do |form| %>
+    <table class="table table-bordered">
+      <tr>
+        <th><%= form.label :street_address %></th>
+        <td><%= form.text_field :street_address, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :city %></th>
+        <td><%= form.text_field :city, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :postal_code %></th>
+        <td><%= form.text_field :postal_code, class: "form-control" %></td>
+      </tr>
+    </table>
+
+    <div class="buttons">
+      <%= form.button type: :submit, class: "btn btn-primary" do %>
+        <i class="fa-solid fa-pen-to-square"></i>Create Address
+      <% end %>
+      |
+      <%= link_to addresses_path, class: "btn btn-secondary" do %>
+        <i class="fa-solid fa-reply"></i>Back
+      <% end %>
+    </div>
+  <% end %>
+</div>

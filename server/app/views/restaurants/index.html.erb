@@ -1,0 +1,37 @@
+<div class="container">
+  <h1 class="text-center">Restaurants</h1>
+  <table class="table table-bordered">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Phone</th>
+      <th>Email</th>
+      <th>Price Range</th>
+      <th>Active</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @restaurants.each do |restaurant| %>
+      <tr>
+        <td><%= restaurant.name %></td>
+        <td><%= restaurant.phone %></td>
+        <td><%= restaurant.email %></td>
+        <td><%= restaurant.price_range %></td>
+        <td><%= restaurant.active ? 'Yes' : 'No' %></td>
+        <td>
+          <%= link_to restaurant_path(restaurant), class: "btn btn-primary" do %>
+            <i class="fa fa-eye"></i>Show
+          <% end %>
+          <%= link_to edit_restaurant_path(restaurant), class: "btn btn-warning" do %>
+            <i class="fa fa-pencil"></i>Edit
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+  <%= link_to new_restaurant_path, class: "btn btn-success" do %>
+    <i class="fas fa-plus-circle"></i>New Restaurant
+  <% end %>
+</div>

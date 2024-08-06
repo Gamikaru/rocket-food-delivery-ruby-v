@@ -1,0 +1,37 @@
+<div class="container">
+  <h1 class="text-center">New Product</h1>
+  <%= form_with model: @product, url: products_path do |form| %>
+    <table class="table table-bordered">
+      <tr>
+        <th><%= form.label :restaurant_id %></th>
+        <td><%= form.collection_select :restaurant_id, Restaurant.all, :id, :name, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :name %></th>
+        <td><%= form.text_field :name, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :description %></th>
+        <td><%= form.text_field :description, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :cost %></th>
+        <td><%= form.number_field :cost, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :price_range %></th>
+        <td><%= form.number_field :price_range, class: "form-control" %></td>
+      </tr>
+    </table>
+
+    <div class="buttons">
+      <%= form.button type: :submit, class: "btn btn-primary" do %>
+        <i class="fa-solid fa-pen-to-square"></i>Create Product
+      <% end %>
+      |
+      <%= link_to products_path, class: "btn btn-secondary" do %>
+        <i class="fa-solid fa-reply"></i>Back
+      <% end %>
+    </div>
+  <% end %>
+</div>

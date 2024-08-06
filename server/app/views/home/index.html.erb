@@ -1,0 +1,25 @@
+<div class="center-screen">
+  <div class="text-center card-container">
+
+    <% if user_signed_in? %>
+
+      <div class="card" style="width: 24rem;">
+        <div class="card-body">
+          <h1 class="card-title">Welcome</h1>
+          <h3><%= current_user.email %> </h3>
+        </div>
+      </div>
+
+    <% else %>
+
+      <div class="card" style="width: 24rem;">
+        <div class="card-body">
+          <h1 class="card-title">Welcome</h1>
+          <h3>Stranger</h3>
+        </div>
+      </div>
+
+    <% end %>
+
+  </div>
+</div>

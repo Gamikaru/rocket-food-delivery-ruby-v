@@ -1,0 +1,33 @@
+<div class="container">
+  <h1 class="text-center">New Employee</h1>
+  <%= form_with model: @employee, url: employees_path do |form| %>
+    <table class="table table-bordered">
+      <tr>
+        <th><%= form.label :user_id %></th>
+        <td><%= form.collection_select :user_id, User.all, :id, :name, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :address_id %></th>
+        <td><%= form.collection_select :address_id, Address.all, :id, :street_address, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :phone %></th>
+        <td><%= form.text_field :phone, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :email %></th>
+        <td><%= form.text_field :email, class: "form-control" %></td>
+      </tr>
+    </table>
+
+    <div class="buttons">
+      <%= form.button type: :submit, class: "btn btn-primary" do %>
+        <i class="fa-solid fa-pen-to-square"></i>Create Employee
+      <% end %>
+      |
+      <%= link_to employees_path, class: "btn btn-secondary" do %>
+        <i class="fa-solid fa-reply"></i>Back
+      <% end %>
+    </div>
+  <% end %>
+</div>

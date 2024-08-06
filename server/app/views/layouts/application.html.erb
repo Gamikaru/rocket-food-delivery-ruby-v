@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>RocketDeliveryBackend</title>
+  <link rel="icon" type="image/x-icon" href="<%= asset_path('favicon.ico') %>" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+
+  <body>
+    <!-- Navbar -->
+    <%= render 'shared/navbar' %>
+    <div id='content'>
+
+      <!-- Bootstrap Alert for 'notice' -->
+      <% if notice %>
+        <div id="notice-alert" class="alert alert-success container mt-5" role="alert">
+          <%= notice %>
+        </div>
+      <% end %>
+
+      <!-- Bootstrap Alert for 'alert' -->
+      <% if alert %>
+        <div id="alert-alert" class="alert alert-danger container mt-5" role="alert">
+          <%= alert %>
+        </div>
+      <% end %>
+
+      <!-- Main -->
+      <%= yield %>
+    </div>
+
+    <script>
+        // Check if alert exists
+        var noticeAlert = document.getElementById('notice-alert');
+        var alertAlert = document.getElementById('alert-alert');
+
+        if (noticeAlert || alertAlert) {
+            // Set a timeout of 3 seconds (3000 milliseconds) to remove the notice alert
+            setTimeout(function() {
+                if (noticeAlert) {
+                    noticeAlert.remove();
+                }
+                if (alertAlert) {
+                    alertAlert.remove();
+                }
+            }, 3000);
+        }
+    </script>
+  </body>
+</html>

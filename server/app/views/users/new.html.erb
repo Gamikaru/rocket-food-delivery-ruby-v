@@ -1,0 +1,33 @@
+<div class="container">
+  <h1 class="text-center">New User</h1>
+  <%= form_with model: @user, url: users_path do |form| %>
+    <table class="table table-bordered">
+      <tr>
+        <th><%= form.label :name %></th>
+        <td><%= form.text_field :name, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :email %></th>
+        <td><%= form.text_field :email, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :password %></th>
+        <td><%= form.password_field :password, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :password_confirmation %></th>
+        <td><%= form.password_field :password_confirmation, class: "form-control" %></td>
+      </tr>
+    </table>
+
+    <div class="buttons">
+      <%= form.button type: :submit, class: "btn btn-primary" do %>
+        <i class="fa-solid fa-pen-to-square"></i>Create User
+      <% end %>
+      |
+      <%= link_to users_path, class: "btn btn-secondary" do %>
+        <i class="fa-solid fa-reply"></i>Back
+      <% end %>
+    </div>
+  <% end %>
+</div>

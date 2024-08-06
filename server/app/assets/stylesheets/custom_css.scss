@@ -1,0 +1,90 @@
+/* GLOBAL CSS */
+.navbar-nav .nav-item {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+/* Add Bootstrap container class */
+.container {
+  padding: 20px;
+}
+
+.center-screen {
+  /* Center the content horizontally and vertically */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-container {
+  /* Center the card and allow it to adjust its width */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90%; /* Set a maximum width if desired */
+}
+
+table {
+  width: 100%;
+  margin: 20px auto; /* Center the table */
+  border-collapse: collapse;
+  background-color: #f8f9fa; /* Light gray background color */
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+}
+
+thead {
+  background-color: #007bff; /* Blue header background color */
+  color: white; /* White text color */
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #f2f2f2; /* Alternate row background color */
+}
+
+/* Bootstrap button style */
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #fff;
+}
+
+.btn:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.btn-danger {
+  background-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333; /* Darker red on hover */
+}
+
+/* Add Bootstrap classes for button icons */
+.btn i {
+  margin-right: 5px;
+}
+
+/* Reduce card-container top margin when screen height is small */
+@media (max-height: 500px) {
+  .card-container {
+    margin-top: 100px;
+  }
+}

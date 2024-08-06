@@ -1,0 +1,35 @@
+<div class="container">
+  <h1 class="text-center">Edit Order</h1>
+  <%= form_with model: @order, url: order_path(@order), method: :patch do |form| %>
+    <table class="table table-bordered">
+      <tr>
+        <th><%= form.label :restaurant_id %></th>
+        <td><%= form.collection_select :restaurant_id, Restaurant.all, :id, :name, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :customer_id %></th>
+        <td><%= form.collection_select :customer_id, Customer.all, :id, :email, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :order_status_id %></th>
+        <td><%= form.collection_select :order_status_id, OrderStatus.all, :id, :name, class: "form-control" %></td>
+      </tr>
+      <tr>
+        <th><%= form.label :restaurant_rating %></th>
+        <td><%= form.number_field :restaurant_rating, class: "form-control" %></td>
+      </tr>
+    </table>
+
+    <div class="buttons d-flex justify-content-start">
+      <%= form.button type: :submit, class: "btn btn-primary me-3" do %>
+        <i class="fas fa-sync-alt me-2"></i>Update Order
+      <% end %>
+      <%= link_to order_path(@order), class: "btn btn-secondary me-3" do %>
+        <i class="fa fa-eye me-2"></i>Show
+      <% end %>
+      <%= link_to orders_path, class: "btn btn-secondary" do %>
+        <i class="fa-solid fa-reply me-2"></i>Back
+      <% end %>
+    </div>
+  <% end %>
+</div>

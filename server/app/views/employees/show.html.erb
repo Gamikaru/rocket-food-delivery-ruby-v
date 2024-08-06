@@ -1,0 +1,26 @@
+<div class="container">
+  <table class="table table-bordered">
+    <tr>
+      <th>Name</th>
+      <td><%= @employee.user.name %></td>
+    </tr>
+    <tr>
+      <th>Phone</th>
+      <td><%= @employee.phone %></td>
+    </tr>
+    <tr>
+      <th>Email</th>
+      <td><%= @employee.email %></td>
+    </tr>
+  </table>
+
+  <div class="buttons">
+    <%= link_to edit_employee_path(@employee), class: "btn btn-primary" do %>
+      <i class="fa fa-pencil"></i>Edit
+    <% end %>
+    |
+    <%= link_to employees_path, class: "btn btn-secondary" do %>
+      <i class="fa-solid fa-reply"></i>Back
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+<div class="container">
+  <h1>Product Order Details</h1>
+  <table class="table table-bordered">
+    <tr>
+      <th>Product</th>
+      <td><%= @product_order.product.name %></td>
+    </tr>
+    <tr>
+      <th>Order</th>
+      <td><%= @product_order.order.id %></td>
+    </tr>
+    <tr>
+      <th>Product Quantity</th>
+      <td><%= @product_order.product_quantity %></td>
+    </tr>
+    <tr>
+      <th>Product Unit Cost</th>
+      <td><%= @product_order.product_unit_cost %></td>
+    </tr>
+  </table>
+
+  <div class="buttons">
+    <%= link_to edit_product_order_path(@product_order), class: "btn btn-primary" do %>
+      <i class="fa fa-pencil"></i>Edit
+    <% end %>
+    |
+    <%= link_to product_orders_path, class: "btn btn-secondary" do %>
+      <i class="fa-solid fa-reply"></i>Back
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<div class="container">
+  <h1><%= @customer.user.name %></h1>
+  <table class="table table-bordered">
+    <tr>
+      <th>Phone</th>
+      <td><%= @customer.phone %></td>
+    </tr>
+    <tr>
+      <th>Email</th>
+      <td><%= @customer.email %></td>
+    </tr>
+    <tr>
+      <th>Active</th>
+      <td><%= @customer.active ? 'Yes' : 'No' %></td>
+    </tr>
+  </table>
+
+  <div class="buttons">
+    <%= link_to edit_customer_path(@customer), class: "btn btn-primary" do %>
+      <i class="fa fa-pencil"></i>Edit
+    <% end %>
+    |
+    <%= link_to customers_path, class: "btn btn-secondary" do %>
+      <i class="fa-solid fa-reply"></i>Back
+    <% end %>
+  </div>
+</div>

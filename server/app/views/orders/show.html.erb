@@ -1,0 +1,31 @@
+<div class="container">
+  <h1>Order Details</h1>
+  <table class="table table-bordered">
+    <tr>
+      <th>Restaurant</th>
+      <td><%= @order.restaurant.name %></td>
+    </tr>
+    <tr>
+      <th>Customer</th>
+      <td><%= @order.customer.email %></td>
+    </tr>
+    <tr>
+      <th>Order Status</th>
+      <td><%= @order.order_status.name %></td>
+    </tr>
+    <tr>
+      <th>Restaurant Rating</th>
+      <td><%= @order.restaurant_rating %></td>
+    </tr>
+  </table>
+
+  <div class="buttons">
+    <%= link_to edit_order_path(@order), class: "btn btn-primary" do %>
+      <i class="fa fa-pencil"></i>Edit
+    <% end %>
+    |
+    <%= link_to orders_path, class: "btn btn-secondary" do %>
+      <i class="fa-solid fa-reply"></i>Back
+    <% end %>
+  </div>
+</div>

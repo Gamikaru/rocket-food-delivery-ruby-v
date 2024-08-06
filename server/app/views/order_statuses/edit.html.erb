@@ -1,0 +1,23 @@
+<div class="container">
+  <h1 class="text-center">Edit <%= @order_status.name %></h1>
+  <%= form_with model: @order_status, url: order_status_path(@order_status), method: :patch do |form| %>
+    <table class="table table-bordered">
+      <tr>
+        <th><%= form.label :name %></th>
+        <td><%= form.select :name, ['pending', 'in progress', 'delivered'], class: "form-control" %></td>
+      </tr>
+    </table>
+
+    <div class="buttons d-flex justify-content-start">
+      <%= form.button type: :submit, class: "btn btn-primary me-3" do %>
+        <i class="fas fa-sync-alt me-2"></i>Update Order Status
+      <% end %>
+      <%= link_to order_status_path(@order_status), class: "btn btn-secondary me-3" do %>
+        <i class="fa fa-eye me-2"></i>Show
+      <% end %>
+      <%= link_to order_statuses_path, class: "btn btn-secondary" do %>
+        <i class="fa-solid fa-reply me-2"></i>Back
+      <% end %>
+    </div>
+  <% end %>
+</div>
