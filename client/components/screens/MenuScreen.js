@@ -13,42 +13,63 @@ const MenuScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         const fetchMenuItems = async () => {
-            const fetchedMenuItems = [
-                { id: '1', name: 'Cheeseburger', price: 0.50, description: 'Lorem ipsum dolor sit amet.', image: require('../../assets/images/restaurants/cuisinePizza.jpg') },
-                { id: '2', name: 'Scotch Eggs', price: 20.25, description: 'Lorem ipsum dolor sit amet.', image: require('../../assets/images/restaurants/cuisinePizza.jpg') },
-                { id: '3', name: 'Cauliflower Penne', price: 9.00, description: 'Lorem ipsum dolor sit amet.', image: require('../../assets/images/restaurants/cuisinePizza.jpg') },
-                { id: '4', name: 'French Toast', price: 19.74, description: 'Lorem ipsum dolor sit amet.', image: require('../../assets/images/restaurants/cuisinePizza.jpg') },
-                { id: '5', name: 'Ricotta Stuffed Ravioli', price: 8.25, description: 'Lorem ipsum dolor sit amet.', image: require('../../assets/images/restaurants/cuisinePizza.jpg') },
-            ];
-            setMenuItems(fetchedMenuItems);
+            try {
+                const baseUrl = process.env.EXPO_PUBLIC_URL;
+                const url = `${baseUrl}/api/products?restaurant=${restaurantId}`;
+                console.log('Fetching menu items from URL:', url); // Log the URL
 
-            const initialOrder = {};
-            fetchedMenuItems.forEach(item => {
-                initialOrder[item.id] = 0;
-            });
-            setOrder(initialOrder);
+                const response = await fetch(url);
+                console.log('Response status:', response.status); // Log the response status
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch menu items, status code: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Fetched menu items:', JSON.stringify(data)); // Log the fetched data
+
+                // Manually associate each product with the restaurant_id
+                const productsWithRestaurant = data.map(item => ({
+                    ...item,
+                    restaurant_id: restaurantId // Add the restaurant_id to each product
+                }));
+
+                console.log('Setting menu items with restaurant ID:', productsWithRestaurant); // Log data before setting it
+                setMenuItems(productsWithRestaurant);
+
+                const initialOrder = {};
+                productsWithRestaurant.forEach(item => {
+                    initialOrder[item.id] = 0;
+                });
+                setOrder(initialOrder);
+            } catch (error) {
+                console.error('Error fetching menu items:', error.message);
+            }
         };
 
         fetchMenuItems();
     }, [restaurantId]);
 
+    // Function to increase the quantity of a selected menu item
     const increaseQuantity = (item) => {
         setOrder({ ...order, [item.id]: (order[item.id] || 0) + 1 });
     };
 
+    // Function to decrease the quantity of a selected menu item
     const decreaseQuantity = (item) => {
         if (order[item.id] > 0) {
             setOrder({ ...order, [item.id]: order[item.id] - 1 });
         }
     };
 
+    // Function to render each menu item
     const renderMenuItem = ({ item }) => (
         <View style={styles.menuCard}>
-            <Image source={item.image} style={styles.menuItemImage} />
+            <Image source={require('../../assets/images/restaurants/cuisinePizza.jpg')} style={styles.menuItemImage} />
             <View style={styles.menuItemInfo}>
                 <Text style={styles.menuItemName}>{item.name}</Text>
-                <Text style={styles.menuItemPrice}>${item.price.toFixed(2)}</Text>
-                <Text style={styles.menuItemDescription}>{item.description}</Text>
+                <Text style={styles.menuItemPrice}>${(item.cost / 100).toFixed(2)}</Text>
+                <Text style={styles.menuItemDescription}>Lorem ipsum dolor sit amet.</Text>
             </View>
             <View style={styles.menuItemControls}>
                 <TouchableOpacity onPress={() => decreaseQuantity(item)} style={styles.quantityButton}>
@@ -65,15 +86,10 @@ const MenuScreen = ({ route, navigation }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.pageTitle}>RESTAURANT MENU</Text>
-            <View style={styles.restaurantInfo}>
-                <Text style={styles.restaurantName}>Sweet Dragon</Text>
-                <Text style={styles.restaurantDetails}>Price: $</Text>
-                <Text style={styles.restaurantDetails}>Rating: <FontAwesome name="star" size={16} color="#000000" /> <FontAwesome name="star" size={16} color="#000000" /> <FontAwesome name="star" size={16} color="#000000" /> <FontAwesome name="star" size={16} color="#000000" /> <FontAwesome name="star-half" size={16} color="#000000" /></Text>
-            </View>
             <FlatList
                 data={menuItems}
                 renderItem={renderMenuItem}
-                keyExtractor={item => item.id}
+                keyExtractor={item => item.id.toString()}
                 contentContainerStyle={styles.menuList}
             />
             <TouchableOpacity style={styles.orderButton} onPress={() => setModalVisible(true)}>
@@ -103,21 +119,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Oswald-Regular',
         marginTop: 30,
         marginBottom: 20,
-    },
-    restaurantInfo: {
-        marginBottom: 20,
-    },
-    restaurantName: {
-        fontSize: 24,
-        color: '#222126',
-        fontWeight: 'bold',
-        fontFamily: 'Oswald-Regular',
-    },
-    restaurantDetails: {
-        fontSize: 18,
-        color: '#222126',
-        fontFamily: 'Oswald-Regular',
-        paddingHorizontal: 5,
     },
     menuList: {
         alignItems: 'center',

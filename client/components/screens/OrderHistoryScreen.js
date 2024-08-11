@@ -1,53 +1,67 @@
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage for storing data locally
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import OrderHistoryDetailModal from '../modals/OrderHistoryDetailModal';
 
 const OrderHistoryScreen = ({ navigation }) => {
-    const [orders, setOrders] = useState([]);
-    const [selectedOrder, setSelectedOrder] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
+    const [orders, setOrders] = useState([]); // State to store the list of orders
+    const [selectedOrder, setSelectedOrder] = useState(null); // State to store the currently selected order
+    const [modalVisible, setModalVisible] = useState(false); // State to manage the visibility of the order detail modal
 
+    // useEffect hook to fetch orders when the component mounts
     useEffect(() => {
         const fetchOrders = async () => {
-            const fetchedOrders = [
-                { id: '1', name: 'Sweet Dragon', status: 'PENDING' },
-                { id: '2', name: 'Spice BBQ', status: 'PENDING' },
-                { id: '3', name: 'Golden Bar & Grill', status: 'PENDING' },
-                { id: '4', name: 'Sweet Dragon', status: 'PENDING' },
-                { id: '5', name: 'WJU Eats', status: 'PENDING' },
-            ];
-            setOrders(fetchedOrders);
+            try {
+                // Get the stored user token (which includes the user_id)
+                const userToken = await AsyncStorage.getItem('userToken');
+
+                // Check if userToken is available
+                if (userToken) {
+                    const { user_id } = JSON.parse(userToken); // Extract user_id from the token
+
+                    // Make an API request to fetch the order history for the logged-in user
+                    const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/orders?id=${user_id}&type=customer`);
+
+                    // Check if the response is OK (status code 200-299)
+                    if (response.ok) {
+                        const data = await response.json(); // Parse the JSON response
+
+                        // Set the fetched orders to the state
+                        setOrders(data);
+                    } else {
+                        // Handle errors by showing an alert
+                        Alert.alert('Error', 'Failed to fetch orders. Please try again later.');
+                    }
+                } else {
+                    // Handle the case where userToken is missing
+                    Alert.alert('Error', 'User not authenticated. Please log in again.');
+                    navigation.navigate('Login'); // Navigate to the login screen
+                }
+            } catch (error) {
+                // Handle any errors that occur during the fetch
+                console.error('Error fetching orders:', error);
+                Alert.alert('Error', 'An error occurred while fetching your order history.');
+            }
         };
 
-        fetchOrders();
+        fetchOrders(); // Call the function to fetch orders
     }, []);
 
+    // Function to handle the selection of an order
     const handleOrderPress = (order) => {
-        // Dummy data for order details
-        const orderDetail = {
-            id: order.id,
-            name: order.name,
-            date: '2023-01-01',
-            total: 20.75,
-            items: [
-                { id: '1', name: 'Cheeseburger', quantity: 1, price: 0.50 },
-                { id: '2', name: 'Scotch Eggs', quantity: 1, price: 20.25 },
-            ],
-            courier: 'John Doe',
-            status: 'PENDING'
-        };
-        setSelectedOrder(orderDetail);
-        setModalVisible(true);
+        setSelectedOrder(order); // Set the selected order
+        setModalVisible(true); // Show the order detail modal
     };
 
+    // Function to render each order in the list
     const renderOrder = ({ item }) => (
         <View style={styles.tableRow}>
-            <Text style={styles.tableCellName}>{item.name}</Text>
-            <Text style={styles.tableCellStatus}>{item.status}</Text>
+            <Text style={styles.tableCellName}>{item.restaurant_name}</Text>
+            <Text style={styles.tableCellStatus}>{item.status.toUpperCase()}</Text>
             <TouchableOpacity
-                onPress={() => handleOrderPress(item)}
+                onPress={() => handleOrderPress(item)} // Pass the selected order to the handler
                 style={styles.tableCellView}
             >
                 <FontAwesomeIcon icon={faMagnifyingGlassPlus} size={20} color="#222126" />
@@ -64,17 +78,19 @@ const OrderHistoryScreen = ({ navigation }) => {
                     <Text style={styles.tableHeaderTextStatus}>STATUS</Text>
                     <Text style={styles.tableHeaderTextView}>VIEW</Text>
                 </View>
+                {/* Render the list of orders using FlatList */}
                 <FlatList
-                    data={orders}
-                    renderItem={renderOrder}
-                    keyExtractor={item => item.id}
+                    data={orders} // Pass the orders array to FlatList
+                    renderItem={renderOrder} // Use renderOrder to render each item
+                    keyExtractor={item => item.id.toString()} // Use the order ID as the key
                 />
             </View>
+            {/* Show the order detail modal when an order is selected */}
             {selectedOrder && (
                 <OrderHistoryDetailModal
                     visible={modalVisible}
-                    onClose={() => setModalVisible(false)}
-                    orderDetail={selectedOrder}
+                    onClose={() => setModalVisible(false)} // Close the modal when requested
+                    orderDetail={selectedOrder} // Pass the selected order details to the modal
                 />
             )}
         </View>

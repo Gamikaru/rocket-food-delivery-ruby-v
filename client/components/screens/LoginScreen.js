@@ -1,65 +1,106 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importing AsyncStorage for local storage operations
-import React, { useState } from 'react'; // Importing React and useState hook
-import { Alert, Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'; // Importing necessary components from react-native
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importing AsyncStorage for storing data locally on the device
+import React, { useState } from 'react'; // Importing React and the useState hook for managing component state
+import { Alert, Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'; // Importing necessary components from React Native
 
+// Get the dimensions of the device screen
 const { width, height } = Dimensions.get('window');
 
-// Functional component definition for the login screen
+// The LoginScreen component is the main component for handling user login
 const LoginScreen = ({ navigation }) => {
-    // State hooks for username and password
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    // useState hook for managing the state of the email, password, and error message
+    const [email, setEmail] = useState(''); // State to store the user's input for email
+    const [password, setPassword] = useState(''); // State to store the user's input for password
+    const [errorMessage, setErrorMessage] = useState(''); // State to store any error message that occurs during login
 
-    // Function to handle login button press
+    // Function to handle the login process when the user presses the login button
     const handleLogin = async () => {
-        // Check if the entered username and password are correct
-        if (username === 'user' && password === 'pass') {
-            try {
-                // Store a dummy auth token in AsyncStorage
-                await AsyncStorage.setItem('userToken', 'dummy-auth-token');
-                // Navigate to the Restaurants screen inside the App navigator
+        try {
+            // Sending the login request to the backend server
+            const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/login`, {
+                method: 'POST', // The request method is POST as we're sending data to the server
+                headers: {
+                    'Content-Type': 'application/json', // The data we're sending is in JSON format
+                },
+                body: JSON.stringify({
+                    email: email, // The email entered by the user
+                    password: password, // The password entered by the user
+                }),
+            });
+
+            // Parsing the JSON response from the server
+            const data = await response.json();
+
+            // Check if the login was successful by looking at the 'success' key in the response
+            if (response.ok && data.success) {
+                // Store the user information (IDs) in AsyncStorage for later use
+                await AsyncStorage.setItem('userToken', JSON.stringify({
+                    user_id: data.user_id,
+                    customer_id: data.customer_id,
+                    courier_id: data.courier_id,
+                }));
+
+                // Navigate to the Restaurants screen after successful login
                 navigation.navigate('App', {
-                    screen: 'Restaurants'
+                    screen: 'Restaurants',
                 });
-            } catch (e) {
-                // Display an alert if there's an error while storing the token
-                Alert.alert('Login failed', 'An error occurred while logging in');
+
+                // Clear any previous error message
+                setErrorMessage('');
+            } else {
+                // If login fails, display an error message
+                setErrorMessage('Invalid email or password');
             }
-        } else {
-            // Display an alert if the entered credentials are invalid
-            Alert.alert('Login failed', 'Invalid credentials');
+        } catch (error) {
+            // If there is an error during the fetch operation, handle it here
+            setErrorMessage('Login failed: An error occurred. Please try again.');
+            console.error('Login error:', error); // Log the error for debugging purposes
+            Alert.alert("Error", "An error occurred while trying to log in. Please check your connection and try again.");
         }
     };
 
+    // The JSX returned by the component defines the UI of the login screen
     return (
         <View style={styles.container}>
-            {/* Displaying the logo */}
+            {/* Display the logo at the top of the screen */}
             <Image source={require('../../assets/images/AppLogoV2.png')} style={styles.logo} />
-            {/* Card container for the login form */}
+
+            {/* The card container holds the login form */}
             <View style={styles.card}>
-                {/* Welcome text */}
+                {/* Title and subtitle of the card */}
                 <Text style={styles.cardTitle}>Welcome Back</Text>
                 <Text style={styles.cardSubtitle}>Login to begin</Text>
-                {/* Email input field */}
+
+                {/* Label and input field for the email */}
                 <Text style={styles.label}>Email</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Enter your primary email here"
-                    placeholderTextColor={styles.placeholderText.color} // Apply placeholder text color
-                    value={username}
-                    onChangeText={setUsername} // Update username state on text change
+                    placeholder="Enter your email here"
+                    placeholderTextColor={styles.placeholderText.color} // The color of the placeholder text
+                    value={email}
+                    onChangeText={setEmail} // Update the email state when the user types
+                    onSubmitEditing={handleLogin} // Submit the login form when the user presses "Enter"
+                    returnKeyType="next" // Shows a "Next" button on the keyboard
+                    keyboardType="email-address" // Use the email keyboard
+                    autoCapitalize="none" // Do not capitalize email input
                 />
-                {/* Password input field */}
+
+                {/* Label and input field for the password */}
                 <Text style={styles.label}>Password</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="••••••••"
-                    placeholderTextColor={styles.placeholderText.color} // Apply placeholder text color
+                    placeholderTextColor={styles.placeholderText.color} // The color of the placeholder text
                     value={password}
-                    secureTextEntry // Secure text entry for password
-                    onChangeText={setPassword} // Update password state on text change
+                    secureTextEntry // Hide the text input for the password
+                    onChangeText={setPassword} // Update the password state when the user types
+                    onSubmitEditing={handleLogin} // Submit the login form when the user presses "Enter"
+                    returnKeyType="done" // Shows a "Done" button on the keyboard
                 />
-                {/* Login button */}
+
+                {/* Display the error message if there is one */}
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+                {/* Login button that triggers the handleLogin function when pressed */}
                 <TouchableOpacity style={styles.button} onPress={handleLogin}>
                     <Text style={styles.buttonText}>LOG IN</Text>
                 </TouchableOpacity>
@@ -145,6 +186,13 @@ const styles = StyleSheet.create({
         color: '#A9A9A9',
         fontSize: 16,
         fontFamily: 'Oswald-Light',
+    },
+    errorText: { // Style for the error message
+        color: 'red',
+        fontSize: 14,
+        marginBottom: 10,
+        alignSelf: 'flex-start',
+        fontFamily: 'Oswald-Regular',
     },
 });
 

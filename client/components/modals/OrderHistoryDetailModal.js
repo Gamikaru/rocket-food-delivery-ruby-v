@@ -16,33 +16,37 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
             <View style={styles.modalContainer}>
                 <View style={styles.outerBorder}>
                     <View style={styles.modalContent}>
+                        {/* Modal Header with Restaurant Name */}
                         <View style={styles.modalHeader}>
-                            <Text style={styles.restaurantName}>{orderDetail.name}</Text>
+                            <Text style={styles.restaurantName}>{orderDetail.restaurant_name}</Text>
                         </View>
+                        {/* Header Info with Order Date, Status, and Courier */}
                         <View style={styles.headerInfoContainer}>
                             <View style={styles.headerInfo}>
-                                <Text style={styles.orderInfo}>Order Date: {orderDetail.date}</Text>
-                                <Text style={styles.orderInfo}>Status: {orderDetail.status}</Text>
-                                <Text style={styles.orderInfo}>Courier: {orderDetail.courier}</Text>
+                                <Text style={styles.orderInfo}>Order Date: {new Date(orderDetail.created_at).toLocaleDateString()}</Text>
+                                <Text style={styles.orderInfo}>Status: {orderDetail.status.toUpperCase()}</Text>
+                                <Text style={styles.orderInfo}>Courier: {orderDetail.courier_name || 'N/A'}</Text>
                             </View>
+                            {/* Close Button */}
                             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                                 <FontAwesomeIcon icon={faX} size={24} color="grey" />
                             </TouchableOpacity>
                         </View>
+                        {/* Content with Ordered Items and Total Cost */}
                         <View style={styles.contentContainer}>
                             <View style={styles.itemsContainer}>
-                                {orderDetail.items.map(item => (
-                                    <View key={item.id} style={styles.itemRow}>
-                                        <Text style={styles.itemName}>{item.name}</Text>
+                                {orderDetail.products.map(item => (
+                                    <View key={item.product_id} style={styles.itemRow}>
+                                        <Text style={styles.itemName}>{item.product_name}</Text>
                                         <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-                                        <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                                        <Text style={styles.itemPrice}>${(item.total_cost / 100).toFixed(2)}</Text>
                                     </View>
                                 ))}
                             </View>
                             <View style={styles.separator} />
                             <Text style={styles.total}>
                                 <Text style={styles.totalLabel}>TOTAL: </Text>
-                                ${orderDetail.total.toFixed(2)}
+                                ${((orderDetail.total_cost || 0) / 100).toFixed(2)}
                             </Text>
                         </View>
                     </View>
