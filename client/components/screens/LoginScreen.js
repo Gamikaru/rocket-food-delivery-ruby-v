@@ -15,34 +15,42 @@ const LoginScreen = ({ navigation }) => {
     // Function to handle the login process when the user presses the login button
     const handleLogin = async () => {
         try {
-            // Sending the login request to the backend server
+            // Sending the login request to the backend server with the user's email and password
             const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/login`, {
-                method: 'POST', // The request method is POST as we're sending data to the server
+                method: 'POST', // POST method is used to send data to the server
                 headers: {
-                    'Content-Type': 'application/json', // The data we're sending is in JSON format
+                    'Content-Type': 'application/json', // Indicating that the content type is JSON
                 },
-                body: JSON.stringify({
-                    email: email, // The email entered by the user
-                    password: password, // The password entered by the user
-                }),
+                body: JSON.stringify({ email, password }), // Sending the email and password as JSON
             });
 
             // Parsing the JSON response from the server
             const data = await response.json();
 
-            // Check if the login was successful by looking at the 'success' key in the response
+            // If the login is successful (response.ok) and the server indicates success (data.success)
             if (response.ok && data.success) {
-                // Store the user information (IDs) in AsyncStorage for later use
+                // Store user-related IDs in AsyncStorage for later use
                 await AsyncStorage.setItem('userToken', JSON.stringify({
-                    user_id: data.user_id,
-                    customer_id: data.customer_id,
-                    courier_id: data.courier_id,
+                    user_id: data.user_id,         // Storing the user's ID
+                    customer_id: data.customer_id, // Storing the customer account ID (if available)
+                    courier_id: data.courier_id,   // Storing the courier account ID (if available)
                 }));
 
-                // Navigate to the Restaurants screen after successful login
-                navigation.navigate('App', {
-                    screen: 'Restaurants',
-                });
+                // Check if the user has both a customer and a courier account
+                if (data.customer_id && data.courier_id) {
+                    // User has both accounts, navigate to the Account Selection screen
+                    navigation.navigate('AccountSelection');
+                } else if (data.customer_id) {
+                    // User has only a Customer account, navigate directly to the Customer App
+                    navigation.navigate('App', {
+                        screen: 'CustomerApp',
+                    });
+                } else if (data.courier_id) {
+                    // User has only a Courier account, navigate directly to the Courier App
+                    navigation.navigate('App', {
+                        screen: 'CourierApp',
+                    });
+                }
 
                 // Clear any previous error message
                 setErrorMessage('');
@@ -51,12 +59,13 @@ const LoginScreen = ({ navigation }) => {
                 setErrorMessage('Invalid email or password');
             }
         } catch (error) {
-            // If there is an error during the fetch operation, handle it here
+            // Handle any errors that occur during the login process
             setErrorMessage('Login failed: An error occurred. Please try again.');
-            console.error('Login error:', error); // Log the error for debugging purposes
+            console.error('Login error:', error); // Log the error for debugging
             Alert.alert("Error", "An error occurred while trying to log in. Please check your connection and try again.");
         }
     };
+
 
     // The JSX returned by the component defines the UI of the login screen
     return (
