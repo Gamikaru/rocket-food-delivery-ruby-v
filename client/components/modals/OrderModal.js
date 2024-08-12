@@ -1,4 +1,4 @@
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import React, { useEffect, useState } from 'react';
@@ -85,7 +85,7 @@ const OrderModal = ({ visible, onClose, menuItems, order, restaurantId }) => {
                     <View style={styles.orderItem} key={item.id}>
                         <Text style={styles.orderItemText}>{item.name}</Text>
                         <Text style={styles.orderItemQuantity}>x{order[item.id]}</Text>
-                        <Text style={styles.orderItemPrice}>${(order[item.id] * item.cost / 100).toFixed(2)}</Text>
+                        <Text style={styles.orderItemPrice}>$ {(order[item.id] * item.cost / 100).toFixed(2)}</Text>
                     </View>
                 );
             }
@@ -105,14 +105,14 @@ const OrderModal = ({ visible, onClose, menuItems, order, restaurantId }) => {
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Order Confirmation</Text>
                         <TouchableOpacity onPress={onClose}>
-                            <FontAwesomeIcon icon={faX} size={24} color="grey" />
+                            <FontAwesomeIcon icon={faX} size={30} color="grey" />
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.orderSummaryTitle}>Order Summary</Text>
                     {renderOrderSummary()}
                     <View style={styles.orderTotal}>
                         <Text style={styles.orderTotalTextBold}>TOTAL:</Text>
-                        <Text style={styles.orderTotalTextRegular}>${(total / 100).toFixed(2)}</Text>
+                        <Text style={styles.orderTotalTextRegular}>$ {(total / 100).toFixed(2)}</Text>
                     </View>
                     {/* Conditionally render the confirm button */}
                     <View style={styles.separatorContainer}>
@@ -120,7 +120,7 @@ const OrderModal = ({ visible, onClose, menuItems, order, restaurantId }) => {
                     </View>
                     {orderStatus !== 'success' && (
                         <TouchableOpacity
-                            style={[styles.confirmButton, (!isOrderValid || isProcessing || orderStatus === 'success') && { backgroundColor: '#999999' }]}
+                            style={[styles.confirmButton, (!isOrderValid || isProcessing || orderStatus === 'success') && { backgroundColor: '#DA583B' }]}
                             onPress={handleOrder}
                             disabled={!isOrderValid || isProcessing || orderStatus === 'success'}
                         >
@@ -131,14 +131,21 @@ const OrderModal = ({ visible, onClose, menuItems, order, restaurantId }) => {
                     )}
                     {orderStatus === 'success' && (
                         <View style={styles.statusContainer}>
-                            <FontAwesome name="check-circle" size={40} color="green" />
-                            <Text style={styles.statusMessage}>Order Successful!</Text>
+                            <View style={styles.circleCheck}>
+                                <FontAwesome5 name="check" style={styles.checkMark} />
+                            </View>
+                            <Text style={styles.statusMessage}>Thank you!</Text>
+                            <Text style={styles.statusMessage}>Your order has been received.</Text>
                         </View>
                     )}
+
                     {orderStatus === 'failure' && (
                         <View style={styles.statusContainer}>
-                            <FontAwesome name="times-circle" size={40} color="red" />
-                            <Text style={styles.statusMessage}>Order Failed. Please try again.</Text>
+                            <View style={styles.circleFail}>
+                                <FontAwesome5 name="times" style={styles.failMark} />
+                            </View>
+                            <Text style={styles.statusMessage}>Your order was not processed successfully.</Text>
+                            <Text style={styles.statusMessage}>Please try again.</Text>
                         </View>
                     )}
                 </View>
@@ -153,12 +160,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
+        paddingTop: 300,
     },
     modalContent: {
-        width: '90%',
+        width: '95%',
         backgroundColor: '#FFFFFF',
         borderRadius: 8,
-        padding: 10,
+        padding: 15,
         alignItems: 'center',
 
     },
@@ -179,42 +187,48 @@ const styles = StyleSheet.create({
     },
 
     modalTitle: {
-        fontSize: 22,
+        fontSize: 25,
         color: '#FFFFFF',
         fontWeight: 'bold',
         fontFamily: 'Oswald-Regular',
     },
     orderSummaryTitle: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#222126',
         fontWeight: 'bold',
         fontFamily: 'Oswald-Bold',
         alignSelf: 'flex-start', // Align 'Order Summary' to the left
         marginTop: 20,
+        marginBottom: 10,
+        // marginLeft: 3,
     },
     orderItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '100%',
         paddingVertical: 5,
+        // marginLeft: 5,
+        // marginRight: 3,
     },
     orderItemText: {
-        fontSize: 16,
+        fontSize: 18,
         color: '#222126',
-        fontFamily: 'Helvetica', // Use Helvetica for the item info
+        fontFamily: 'Arial', // Use Arial for the item info
         flex: 1,
     },
     orderItemQuantity: {
-        fontSize: 16,
+        fontSize: 18,
         color: '#222126',
-        fontFamily: 'Helvetica', // Use Helvetica for the item quantity
-        textAlign: 'center',
-        width: 30,
+        fontFamily: 'Arial', // Use Arial for the item quantity
+        textAlign: 'left',
+        width: 40,
+        letterSpacing: 1, // Add a small letter spacing to space the quantity from the 'x'
+        paddingRight: 10, // Add a small padding to space the quantity from the price
     },
     orderItemPrice: {
-        fontSize: 16,
+        fontSize: 18,
         color: '#222126',
-        fontFamily: 'Helvetica', // Use Helvetica for the item price
+        fontFamily: 'Arial', // Use Arial for the item price
         textAlign: 'right',
         width: 80,
     },
@@ -224,56 +238,82 @@ const styles = StyleSheet.create({
         width: '100%',
         borderTopWidth: 1,
         borderTopColor: '#222126',
-        marginTop: 5,
+        marginTop: 10,
     },
     orderTotalTextBold: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#222126',
         fontFamily: 'Oswald-Bold', // Use Oswald-Bold for the 'TOTAL:' label
         fontWeight: 'bold',
+        paddingTop: 5, // Add a small padding to space the 'TOTAL:' label from the $ value
     },
     orderTotalTextRegular: {
-        fontSize: 16,
+        fontSize: 20,
         color: '#222126',
         fontFamily: 'Oswald-Regular', // Use Oswald-Regular for the total value
         marginLeft: 5, // Add a small margin if needed to space the $ value from the 'TOTAL:' label
+        paddingTop: 5, // Add a small padding to space the $ value from the 'TOTAL:' label
     },
     confirmButton: {
         backgroundColor: '#DA583B',
         paddingVertical: 8,
         borderRadius: 8,
         alignItems: 'center',
-        marginVertical: 5,
+        marginTop: 10,
+        marginBottom: 20,
         width: '100%',
     },
     confirmButtonText: {
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: 20,
         fontWeight: 'bold',
         fontFamily: 'Oswald-Regular',
         textTransform: 'uppercase',
+        paddingVertical: 2
     },
+    circleCheck: {
+        width: 45, // Outer circle size
+        height: 45,
+        borderRadius: 25,
+        backgroundColor: '#609475', // Circle background color
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    circleFail: {
+        width: 45, // Outer circle size
+        height: 45,
+        borderRadius: 25,
+        backgroundColor: '#851919', // Circle background color
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    checkMark: {
+        fontSize: 20, // Smaller checkmark size
+        color: 'white', // Checkmark color
+    },
+    failMark: {
+        fontSize: 25, // Smaller  size
+        color: 'white', //  color
+        thickness: 2, //
+    },
+
     statusContainer: {
         alignItems: 'center',
-        marginVertical: 20,
+        marginVertical: 0,
     },
     statusMessage: {
         fontSize: 18,
         color: '#222126',
-        fontFamily: 'Oswald-Regular',
-        marginTop: 10,
-    },
-    separatorContainer: {
-        width: '100%',         // Make sure the container is full width
-        paddingHorizontal: 0,  // Remove any padding
-        marginVertical: 10,    // Keep the vertical margin as needed
+        fontFamily: 'Arial',
+        marginTop: 0,
+        paddingVertical: 2,
     },
     separator: {
         borderBottomColor: '#EEEEEE', // Light grey color
         borderBottomWidth: 1,         // Thin line
         width: '100%',                // Explicitly set the width to 100%
     },
-    
+
 
 
 });

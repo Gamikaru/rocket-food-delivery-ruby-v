@@ -2,8 +2,9 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import Header from '../Header'; // Import the Header component if needed for the custom header
 import OrderHistoryScreen from '../screens/OrderHistoryScreen';
-import RestaurantsScreen from '../screens/RestaurantsScreen';
+import RestaurantsStackNavigator from './RestaurantsStackNavigator'; // Use the stack navigator here
 
 const Tab = createBottomTabNavigator();
 
@@ -29,21 +30,32 @@ const TabNavigator = () => {
         tabBarInactiveTintColor: '#222126',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
-          height: 100, // Increase height to allow more space for padding
+          height: 100,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontFamily: 'helvetica',
+          fontFamily: 'Arial',
           fontWeight: 'bold',
           color: '#222126',
           letterSpacing: 0.8,
-          marginBottom: 10, // Adjust the spacing between the icon and label
+          marginBottom: 10,
         },
-        headerShown: false, // Disable the default header
       })}
     >
-      <Tab.Screen name="Restaurants" component={RestaurantsScreen} />
-      <Tab.Screen name="OrderHistory" component={OrderHistoryScreen} />
+      <Tab.Screen
+        name="Restaurants"
+        component={RestaurantsStackNavigator} // Correctly use stack navigator
+        options={{
+          headerShown: false, // Set this to false if no global header is needed
+        }}
+      />
+      <Tab.Screen
+        name="OrderHistory"
+        component={OrderHistoryScreen}
+        options={{
+          header: () => <Header />, // Show custom header for OrderHistoryScreen
+        }}
+      />
     </Tab.Navigator>
   );
 };
@@ -52,15 +64,15 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padingTop: 5
-    },
+    paddingTop: 5,
+  },
   iconContainerFocused: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(222, 184, 255, 0.5)', // Pinkish/purply lilacy glow
-    borderRadius: 20, // Adjust the size to make it more oval
-    paddingVertical: 8, // Adjust padding for vertical spacing
-    paddingHorizontal: 25, // Increase padding for horizontal spacing to make it more elongated
+    backgroundColor: 'rgba(222, 184, 255, 0.5)',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 25,
   },
 });
 

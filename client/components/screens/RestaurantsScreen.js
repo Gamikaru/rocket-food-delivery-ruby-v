@@ -1,4 +1,4 @@
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons'; // Correct import for FontAwesome and MaterialIcons
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, FlatList, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -10,6 +10,7 @@ import cuisinePizza from '../../assets/images/restaurants/cuisinePizza.jpg';
 import cuisineSoutheast from '../../assets/images/restaurants/cuisineSoutheast.jpg';
 import cuisineViet from '../../assets/images/restaurants/cuisineViet.jpg';
 
+// Dynamic dimensions
 const { width, height } = Dimensions.get('window');
 
 // Array of all imported images
@@ -41,7 +42,6 @@ const RestaurantsScreen = ({ navigation }) => {
     useEffect(() => {
         const fetchRestaurants = async () => {
             try {
-                // Use the correct IP address depending on the environment
                 const baseUrl = process.env.EXPO_PUBLIC_URL;
                 const url = `${baseUrl}/api/restaurants`;
 
@@ -86,7 +86,6 @@ const RestaurantsScreen = ({ navigation }) => {
         }
 
         if (selectedPrice) {
-            // Convert selectedPrice from dollar signs to numeric value for comparison
             const priceValue = selectedPrice.length; // Convert '$', '$$', '$$$' to 1, 2, 3
             filtered = filtered.filter(restaurant => restaurant.price_range === priceValue);
         }
@@ -94,22 +93,28 @@ const RestaurantsScreen = ({ navigation }) => {
         setFilteredRestaurants(filtered); // Update the filtered restaurants state
     };
 
-    // Render each restaurant item
     const renderRestaurant = ({ item }) => (
         <TouchableOpacity
-            onPress={() => navigation.navigate('Menu', { restaurantId: item.id })}
+            onPress={() => navigation.navigate('Menu', {
+                restaurantId: item.id,
+                restaurantName: item.name,
+                priceRange: item.price_range,
+                rating: item.rating
+            })}
             style={styles.restaurantCard}
         >
             <Image source={getRandomImage()} style={styles.restaurantImage} />
             <View style={styles.restaurantInfo}>
-                <Text style={styles.restaurantName}>{item.name} ({priceRangeToDollarSigns(item.price_range)})</Text>
+                <Text style={styles.restaurantName}>
+                    {item.name}&nbsp;<Text>({priceRangeToDollarSigns(item.price_range)})</Text>
+                </Text>
                 <View style={styles.ratingContainer}>
                     {[...Array(item.rating)].map((_, index) => (
-                        <FontAwesome
+                        <MaterialIcons
                             key={index}
                             name='star'
                             size={16}
-                            color='#000000' // Only render black stars based on the rating
+                            color='#000000'
                         />
                     ))}
                 </View>
@@ -117,7 +122,6 @@ const RestaurantsScreen = ({ navigation }) => {
         </TouchableOpacity>
     );
 
-    // Helper function to convert price range to dollar signs
     const priceRangeToDollarSigns = (priceRange) => {
         return '$'.repeat(priceRange);
     };
@@ -130,7 +134,7 @@ const RestaurantsScreen = ({ navigation }) => {
                     <Text style={styles.filterTitle}>Rating</Text>
                     <TouchableOpacity
                         style={styles.filterButton}
-                        onPress={() => setRatingModalVisible(true)} // Show the rating modal
+                        onPress={() => setRatingModalVisible(true)}
                     >
                         <View style={styles.filterButtonContent}>
                             {selectedRating ? (
@@ -141,7 +145,7 @@ const RestaurantsScreen = ({ navigation }) => {
                                             name='star'
                                             size={16}
                                             color='#FFFFFF'
-                                            style={styles.iconSpacing} // Add spacing between the stars
+                                            style={styles.iconSpacing}
                                         />
                                     ))}
                                 </View>
@@ -158,7 +162,7 @@ const RestaurantsScreen = ({ navigation }) => {
                     <Text style={styles.filterTitle}>Price</Text>
                     <TouchableOpacity
                         style={styles.filterButton}
-                        onPress={() => setPriceModalVisible(true)} // Show the price modal
+                        onPress={() => setPriceModalVisible(true)}
                     >
                         <View style={styles.filterButtonContent}>
                             <Text style={styles.filterButtonText}>
@@ -175,7 +179,7 @@ const RestaurantsScreen = ({ navigation }) => {
             <FlatList
                 data={filteredRestaurants} // Use filtered restaurants list
                 renderItem={renderRestaurant}
-                keyExtractor={item => item.id}
+                keyExtractor={item => item.id.toString()}
                 contentContainerStyle={styles.restaurantList}
                 numColumns={2}
             />
@@ -191,8 +195,8 @@ const RestaurantsScreen = ({ navigation }) => {
                     <TouchableOpacity
                         style={styles.modalItem}
                         onPress={() => {
-                            setSelectedRating(null); // Reset the rating filter
-                            setRatingModalVisible(false); // Hide the modal
+                            setSelectedRating(null);
+                            setRatingModalVisible(false);
                         }}
                     >
                         <Text style={styles.modalText}>All</Text>
@@ -203,7 +207,7 @@ const RestaurantsScreen = ({ navigation }) => {
                             style={styles.modalItem}
                             onPress={() => {
                                 setSelectedRating(rating);
-                                setRatingModalVisible(false); // Hide the modal
+                                setRatingModalVisible(false);
                             }}
                         >
                             <View style={{ flexDirection: 'row' }}>
@@ -232,8 +236,8 @@ const RestaurantsScreen = ({ navigation }) => {
                     <TouchableOpacity
                         style={styles.modalItem}
                         onPress={() => {
-                            setSelectedPrice(null); // Reset the price filter
-                            setPriceModalVisible(false); // Hide the modal
+                            setSelectedPrice(null);
+                            setPriceModalVisible(false);
                         }}
                     >
                         <Text style={styles.modalText}>All</Text>
@@ -244,7 +248,7 @@ const RestaurantsScreen = ({ navigation }) => {
                             style={styles.modalItem}
                             onPress={() => {
                                 setSelectedPrice(price);
-                                setPriceModalVisible(false); // Hide the modal
+                                setPriceModalVisible(false);
                             }}
                         >
                             <Text style={styles.modalText}>{price}</Text>
@@ -260,39 +264,44 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
-        marginTop: -20
+        paddingHorizontal: width > 360 ? 30 : 25,
+        marginTop: height > 800 ? -20 : 0,
     },
     pageTitle: {
-        fontSize: 30,
+        fontSize: width > 360 ? 30 : 24,
         color: '#222126',
         fontWeight: 'bold',
         fontFamily: 'Oswald-Regular',
-        marginLeft: 20,
-        marginTop: 50,
-        marginBottom: 30,
+        marginLeft: 0,
+        marginTop: height > 800 ? 50 : 30,
+        marginBottom: 20,
+        adjustsFontSizeToFit: true,
+        numberOfLines: 1,
     },
     filterContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        marginBottom: 10,
+        paddingHorizontal: 0,
+        marginBottom: 20,
     },
     filterGroup: {
         width: '45%',
     },
     filterTitle: {
-        fontSize: 28,
+        fontSize: width > 360 ? 28 : 24,
         color: '#222126',
         fontFamily: 'Oswald-Regular',
         fontWeight: 'bold',
         marginBottom: 2,
+        adjustsFontSizeToFit: true,
+        numberOfLines: 1,
     },
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#DA583B',
-        padding: 10,
+        padding: width > 360 ? 10 : 8,
         paddingBottom: 12,
         borderRadius: 5,
         width: '100%',
@@ -300,8 +309,8 @@ const styles = StyleSheet.create({
     },
     filterButtonText: {
         color: '#FFFFFF',
-        fontSize: 16,
-        fontFamily: 'helvetica',
+        fontSize: width > 360 ? 16 : 14,
+        fontFamily: 'Arial',
     },
     filterButtonContent: {
         flexDirection: 'row',
@@ -311,19 +320,26 @@ const styles = StyleSheet.create({
         marginRight: 0,
     },
     sectionTitle: {
-        fontSize: 30,
+        fontSize: width > 360 ? 30 : 24,
         color: '#222126',
         fontWeight: 'Bold',
         fontFamily: 'Oswald-Regular',
-        marginLeft: 20,
-        marginBottom: 10,
+        marginLeft: '2.5%',
+        marginBottom: 15,
+        paddingBottom: 5,
+        adjustsFontSizeToFit: true,
+        numberOfLines: 1,
     },
+    // Additional styles for FlatList container
     restaurantList: {
-        alignItems: 'center',
+        alignItems: 'top',
+        justifyContent: 'top',  // Center the cards in the FlatList
+        flexGrow: 1, // Allow the container to grow and fill space
     },
     restaurantCard: {
-        width: width * 0.4,
-        margin: 15,
+        width: '45%',
+        marginHorizontal: '2.5%',
+        marginBottom: 20,
         borderRadius: 8,
         backgroundColor: '#fff',
         shadowColor: '#000',
@@ -332,31 +348,36 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 5,
         height: height * 0.25,
+        minHeight: 150,  // Add this to ensure minimum height
+        justifyContent: 'space-between',  // Adjust this to ensure spacing
+        flexGrow: 1, // Ensure that the card takes available space
     },
     restaurantImage: {
         width: '100%',
-        height: '50%',
+        height: undefined,
+        aspectRatio: 1.5,
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
+        resizeMode: 'cover',
     },
     restaurantInfo: {
         padding: 10,
-        height: '50%',
+        flex: 1, // Ensure it takes up the available space
     },
     restaurantName: {
-        fontSize: 20,
+        fontSize: width > 360 ? 18 : 16,
         color: '#222126',
-        fontWeight: 'bold',
         fontFamily: 'Oswald-Regular',
         marginBottom: 15,
         textAlign: 'left',
+        letterSpacing: 0,
+        flexWrap: 'nowrap',
+        flexShrink: 1,
+        overflow: 'hidden',
     },
     ratingContainer: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
-    },
-    restaurantRating: {
-        color: '#000000',
     },
     modalContainer: {
         flex: 1,
@@ -369,13 +390,13 @@ const styles = StyleSheet.create({
         padding: 20,
         marginVertical: 5,
         borderRadius: 8,
-        width: '80%',
+        width: width > 360 ? '80%' : '90%',
         alignItems: 'center',
     },
     modalText: {
-        fontSize: 18,
+        fontSize: width > 360 ? 18 : 16,
         color: '#222126',
-        fontFamily: 'Oswald-Regular',
+        fontFamily: 'Arial',
     },
 });
 

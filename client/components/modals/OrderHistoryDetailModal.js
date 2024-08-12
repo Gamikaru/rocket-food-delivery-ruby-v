@@ -39,14 +39,14 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
                                     <View key={item.product_id} style={styles.itemRow}>
                                         <Text style={styles.itemName}>{item.product_name}</Text>
                                         <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-                                        <Text style={styles.itemPrice}>${(item.total_cost / 100).toFixed(2)}</Text>
+                                        <Text style={styles.itemPrice}>$ {(item.total_cost / 100).toFixed(2)}</Text>
                                     </View>
                                 ))}
                             </View>
                             <View style={styles.separator} />
                             <Text style={styles.total}>
                                 <Text style={styles.totalLabel}>TOTAL: </Text>
-                                ${((orderDetail.total_cost || 0) / 100).toFixed(2)}
+                                $ {((orderDetail.total_cost || 0) / 100).toFixed(2)}
                             </Text>
                         </View>
                     </View>
@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
         color: '#E95420',
         fontWeight: 'bold',
         fontFamily: 'Oswald-Bold',
+        marginLeft: 10,
     },
     headerInfoContainer: {
         flexDirection: 'row',
@@ -102,11 +103,13 @@ const styles = StyleSheet.create({
     },
     headerInfo: {
         flex: 1,
+        marginLeft: 10,
+        marginBottom: 5,
     },
     orderInfo: {
         fontSize: 16,
         color: '#FFFFFF',
-        fontFamily: 'helvetica',
+        fontFamily: 'Arial',
         marginVertical: 2,
     },
     closeButton: {
@@ -129,35 +132,35 @@ const styles = StyleSheet.create({
     itemName: {
         fontSize: 16,
         color: '#222126',
-        fontFamily: 'helvetica',
+        fontFamily: 'Arial',
         flex: 3,
     },
     itemQuantity: {
-        fontSize: 16,
+        fontSize: 18,
         color: '#222126',
-        fontFamily: 'helvetica',
-        textAlign: 'center',
+        fontFamily: 'Arial',
+        textAlign: 'left',
         flex: 1,
     },
     itemPrice: {
-        fontSize: 16,
+        fontSize: 18,
         color: '#222126',
-        fontFamily: 'helvetica',
+        fontFamily: 'Arial',
         textAlign: 'right',
         flex: 1,
     },
     separator: {
         borderBottomColor: '#000000',
         borderBottomWidth: 1,
-        marginVertical: 10,
+        marginVertical: 0,
     },
     total: {
         fontSize: 18,
         color: '#222126',
-        fontWeight: 'normal',
-        fontFamily: 'helvetica',
+        fontFamily: 'Oswald-Medium',
         textAlign: 'right',
-        marginTop: 10,
+        marginTop: 2,
+        marginBottom: 12,
     },
     totalLabel: {
         fontWeight: 'bold',

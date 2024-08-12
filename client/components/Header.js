@@ -1,16 +1,20 @@
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-const Header = ({ navigation }) => (
-    <View style={styles.header}>
-        <Image source={require('../assets/images/AppLogoV1.png')} style={styles.headerLogo} />
-        <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.logoutButtonText}>LOG OUT</Text>
-        </TouchableOpacity>
-    </View>
-);
+const Header = () => {
+    const navigation = useNavigation(); // Get navigation prop
+    return (
+        <View style={styles.header}>
+            <Image source={require('../assets/images/AppLogoV1.png')} style={styles.headerLogo} />
+            <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.logoutButtonText}>LOG OUT</Text>
+            </TouchableOpacity>
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
     header: {
