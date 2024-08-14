@@ -1,115 +1,86 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importing AsyncStorage for storing data locally on the device
-import React, { useState } from 'react'; // Importing React and the useState hook for managing component state
-import { Alert, Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'; // Importing necessary components from React Native
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState } from 'react';
+import { Alert, Dimensions, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-// Get the dimensions of the device screen
 const { width, height } = Dimensions.get('window');
 
-// The LoginScreen component is the main component for handling user login
 const LoginScreen = ({ navigation }) => {
-    // useState hook for managing the state of the email, password, and error message
-    const [email, setEmail] = useState(''); // State to store the user's input for email
-    const [password, setPassword] = useState(''); // State to store the user's input for password
-    const [errorMessage, setErrorMessage] = useState(''); // State to store any error message that occurs during login
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
-    // Function to handle the login process when the user presses the login button
     const handleLogin = async () => {
         try {
-            // Sending the login request to the backend server with the user's email and password
             const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/login`, {
-                method: 'POST', // POST method is used to send data to the server
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json', // Indicating that the content type is JSON
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }), // Sending the email and password as JSON
+                body: JSON.stringify({ email, password }),
             });
 
-            // Parsing the JSON response from the server
             const data = await response.json();
 
-            // If the login is successful (response.ok) and the server indicates success (data.success)
             if (response.ok && data.success) {
-                // Store user-related IDs in AsyncStorage for later use
                 await AsyncStorage.setItem('userToken', JSON.stringify({
-                    user_id: data.user_id,         // Storing the user's ID
-                    customer_id: data.customer_id, // Storing the customer account ID (if available)
-                    courier_id: data.courier_id,   // Storing the courier account ID (if available)
+                    user_id: data.user_id,
+                    customer_id: data.customer_id,
+                    courier_id: data.courier_id,
                 }));
 
-                // Check if the user has both a customer and a courier account
                 if (data.customer_id && data.courier_id) {
-                    // User has both accounts, navigate to the Account Selection screen
                     navigation.navigate('AccountSelection');
                 } else if (data.customer_id) {
-                    // User has only a Customer account, navigate directly to the Customer App
-                    navigation.navigate('App', {
-                        screen: 'CustomerApp',
-                    });
+                    navigation.navigate('App', { screen: 'CustomerApp' });
                 } else if (data.courier_id) {
-                    // User has only a Courier account, navigate directly to the Courier App
-                    navigation.navigate('App', {
-                        screen: 'CourierApp',
-                    });
+                    navigation.navigate('App', { screen: 'CourierApp' });
                 }
 
-                // Clear any previous error message
                 setErrorMessage('');
             } else {
-                // If login fails, display an error message
                 setErrorMessage('Invalid email or password');
             }
         } catch (error) {
-            // Handle any errors that occur during the login process
             setErrorMessage('Login failed: An error occurred. Please try again.');
-            console.error('Login error:', error); // Log the error for debugging
+            console.error('Login error:', error);
             Alert.alert("Error", "An error occurred while trying to log in. Please check your connection and try again.");
         }
     };
 
-
-    // The JSX returned by the component defines the UI of the login screen
     return (
         <View style={styles.container}>
-            {/* Display the logo at the top of the screen */}
             <Image source={require('../../assets/images/AppLogoV2.png')} style={styles.logo} />
-
-            {/* The card container holds the login form */}
             <View style={styles.card}>
-                {/* Title and subtitle of the card */}
                 <Text style={styles.cardTitle}>Welcome Back</Text>
                 <Text style={styles.cardSubtitle}>Login to begin</Text>
 
-                {/* Label and input field for the email */}
                 <Text style={styles.label}>Email</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="Enter your email here"
-                    placeholderTextColor={styles.placeholderText.color} // The color of the placeholder text
+                    placeholderTextColor={styles.placeholderText.color}
                     value={email}
-                    onChangeText={setEmail} // Update the email state when the user types
-                    onSubmitEditing={handleLogin} // Submit the login form when the user presses "Enter"
-                    returnKeyType="next" // Shows a "Next" button on the keyboard
-                    keyboardType="email-address" // Use the email keyboard
-                    autoCapitalize="none" // Do not capitalize email input
+                    onChangeText={setEmail}
+                    onSubmitEditing={handleLogin}
+                    returnKeyType="next"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
                 />
 
-                {/* Label and input field for the password */}
                 <Text style={styles.label}>Password</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="••••••••"
-                    placeholderTextColor={styles.placeholderText.color} // The color of the placeholder text
+                    placeholderTextColor={styles.placeholderText.color}
                     value={password}
-                    secureTextEntry // Hide the text input for the password
-                    onChangeText={setPassword} // Update the password state when the user types
-                    onSubmitEditing={handleLogin} // Submit the login form when the user presses "Enter"
-                    returnKeyType="done" // Shows a "Done" button on the keyboard
+                    secureTextEntry
+                    onChangeText={setPassword}
+                    onSubmitEditing={handleLogin}
+                    returnKeyType="done"
                 />
 
-                {/* Display the error message if there is one */}
                 {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-                {/* Login button that triggers the handleLogin function when pressed */}
                 <TouchableOpacity style={styles.button} onPress={handleLogin}>
                     <Text style={styles.buttonText}>LOG IN</Text>
                 </TouchableOpacity>
@@ -129,11 +100,19 @@ const styles = StyleSheet.create({
         width: width * 0.8,
         height: height * 0.4,
         resizeMode: 'contain',
-        marginBottom: -50,
+        marginBottom: Platform.select({
+            ios: -50,
+            android: -50,
+            default: -50,
+        }),
     },
     card: {
         width: '80%',
-        padding: 30,
+        padding: Platform.select({
+            ios: 30,
+            android: 30,
+            default: 30,
+        }),
         borderRadius: 8,
         backgroundColor: '#fff',
         shadowColor: '#000',
@@ -144,41 +123,77 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cardTitle: {
-        fontSize: 24,
+        fontSize: Platform.select({
+            ios: 24,
+            android: 24,
+            default: 24,
+        }),
         marginBottom: 10,
         fontWeight: 'normal',
         color: '#222126',
-        fontFamily: 'Oswald-Regular',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial-BoldMT',
+        }),
         alignSelf: 'flex-start',
     },
     cardSubtitle: {
-        fontSize: 18,
+        fontSize: Platform.select({
+            ios: 18,
+            android: 18,
+            default: 18,
+        }),
         marginBottom: 20,
         color: '#222126',
         fontWeight: 'bold',
-        fontFamily: 'Oswald-Regular',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial-BoldMT',
+        }),
         alignSelf: 'flex-start',
     },
     label: {
-        fontSize: 14,
+        fontSize: Platform.select({
+            ios: 14,
+            android: 14,
+            default: 14,
+        }),
         color: '#222126',
         marginBottom: 5,
-        fontFamily: 'Oswald-Regular',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial-BoldMT',
+        }),
         alignSelf: 'flex-start',
     },
     input: {
         width: '100%',
-        padding: 10,
+        padding: Platform.select({
+            ios: 10,
+            android: 10,
+            default: 10,
+        }),
         marginBottom: 10,
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 5,
         backgroundColor: '#F5F5F5',
-        fontFamily: 'Oswald-Regular',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial',
+        }),
     },
     button: {
         backgroundColor: '#DA583B',
-        padding: 10,
+        padding: Platform.select({
+            ios: 10,
+            android: 10,
+            default: 10,
+        }),
         borderRadius: 5,
         alignItems: 'center',
         marginTop: 10,
@@ -186,22 +201,46 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: '#FFFFFF',
-        fontSize: 18,
+        fontSize: Platform.select({
+            ios: 18,
+            android: 18,
+            default: 18,
+        }),
         fontWeight: 'bold',
-        fontFamily: 'Oswald-SemiBold',
+        fontFamily: Platform.select({
+            ios: 'Oswald-SemiBold',
+            android: 'Oswald-SemiBold',
+            default: 'Arial-BoldMT',
+        }),
         textTransform: 'uppercase',
     },
     placeholderText: {
         color: '#A9A9A9',
-        fontSize: 16,
-        fontFamily: 'Oswald-Light',
+        fontSize: Platform.select({
+            ios: 16,
+            android: 16,
+            default: 16,
+        }),
+        fontFamily: Platform.select({
+            ios: 'Oswald-Light',
+            android: 'Oswald-Light',
+            default: 'Arial',
+        }),
     },
-    errorText: { // Style for the error message
+    errorText: {
         color: 'red',
-        fontSize: 14,
+        fontSize: Platform.select({
+            ios: 14,
+            android: 14,
+            default: 14,
+        }),
         marginBottom: 10,
         alignSelf: 'flex-start',
-        fontFamily: 'Oswald-Regular',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial',
+        }),
     },
 });
 

@@ -1,11 +1,84 @@
+import { FontAwesome } from '@expo/vector-icons';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import React from 'react';
-import { Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Dimensions, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
 const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
+    // State to hold the current rating, initial average rating, and updated average rating
+    const [rating, setRating] = useState(orderDetail.restaurant_rating || 0);
+    const [initialAvgRating, setInitialAvgRating] = useState(null);
+    const [updatedAvgRating, setUpdatedAvgRating] = useState(null);
+
+    useEffect(() => {
+        // Function to fetch initial average rating for the restaurant
+        const fetchInitialRating = async () => {
+            try {
+                console.log(`Fetching initial rating for restaurant ID: ${orderDetail.restaurant_id}`);
+                const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/restaurants?id=${orderDetail.restaurant_id}`);
+                if (response.ok) {
+                    const restaurant = await response.json();
+                    const matchingRestaurant = restaurant.find(rest => rest.id === orderDetail.restaurant_id);
+                    console.log('Initial restaurant data:', matchingRestaurant);
+                    setInitialAvgRating(matchingRestaurant?.rating);
+                } else {
+                    console.error('Failed to fetch initial rating.');
+                }
+            } catch (error) {
+                console.error('Error fetching initial rating:', error);
+            }
+        };
+
+        fetchInitialRating();
+    }, [orderDetail.restaurant_id]);
+
+    // Function to handle rating submission
+    const submitRating = async () => {
+        try {
+            console.log(`Submitting rating: ${rating} for order ID: ${orderDetail.id}`);
+            const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/order/${orderDetail.id}/rating`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ restaurant_rating: rating }),
+            });
+
+            if (response.ok) {
+                console.log(`Rating submitted successfully for order ID: ${orderDetail.id}.`);
+
+                // Add a 4-second delay before fetching the updated rating
+                await new Promise(resolve => setTimeout(resolve, 4000));
+
+                console.log(`Fetching updated rating for restaurant ID: ${orderDetail.restaurant_id}`);
+                const updatedResponse = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/restaurants?id=${orderDetail.restaurant_id}`);
+                if (updatedResponse.ok) {
+                    const updatedRestaurant = await updatedResponse.json();
+                    const matchingRestaurant = updatedRestaurant.find(rest => rest.id === orderDetail.restaurant_id);
+                    console.log('Fetched Updated Restaurant Data:', updatedRestaurant);
+                    setUpdatedAvgRating(matchingRestaurant?.rating);
+
+                    if (initialAvgRating !== matchingRestaurant?.rating) {
+                        Alert.alert('Success', `Your rating has been submitted. The average rating changed from ${initialAvgRating} to ${matchingRestaurant?.rating}.`);
+                    } else {
+                        Alert.alert('No Change', 'Your rating was submitted, but the average rating did not change.');
+                    }
+                } else {
+                    console.error('Failed to fetch updated rating.');
+                }
+
+                onClose();  // Close the modal after submission
+            } else {
+                Alert.alert('Error', 'Failed to submit rating. Please try again later.');
+            }
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            Alert.alert('Error', 'An error occurred while submitting your rating.');
+        }
+    };
+
     return (
         <Modal
             visible={visible}
@@ -49,12 +122,38 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
                                 $ {((orderDetail.total_cost || 0) / 100).toFixed(2)}
                             </Text>
                         </View>
+                        {/* Rating Section */}
+                        <View style={styles.ratingContainer}>
+                            <Text style={styles.sectionTitle}>Rate Your Order</Text>
+                            <View style={styles.starsContainer}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <TouchableOpacity
+                                        key={star}
+                                        onPress={() => setRating(star)}
+                                    >
+                                        <FontAwesome
+                                            name={star <= rating ? 'star' : 'star-o'}
+                                            size={30}
+                                            color="#FFD700"
+                                            style={styles.star}
+                                        />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                            <Button
+                                title="Submit Rating"
+                                onPress={submitRating}
+                                disabled={rating === 0}
+                            />
+                        </View>
                     </View>
                 </View>
             </View>
         </Modal>
     );
 };
+
+
 
 const styles = StyleSheet.create({
     modalContainer: {
@@ -67,8 +166,16 @@ const styles = StyleSheet.create({
         width: '90%',
         borderRadius: 10,
         backgroundColor: '#FFFFFF',
-        padding: 8, // This will be the white border thickness
-        marginTop: 0.3 * height,
+        padding: Platform.select({
+            ios: 8,
+            android: 8,
+            default: 8, // White border thickness
+        }),
+        marginTop: Platform.select({
+            ios: height * 0.15,
+            android: height * 0.15,
+            default: height * 0.15, // Centered vertically
+        }),
     },
     modalContent: {
         backgroundColor: '#FFFFFF',
@@ -79,17 +186,37 @@ const styles = StyleSheet.create({
     },
     modalHeader: {
         backgroundColor: '#222126',
-        paddingHorizontal: 20,
-        paddingTop: 15,
-        paddingBottom: 5,
+        paddingHorizontal: Platform.select({
+            ios: 20,
+            android: 20,
+            default: 20,
+        }),
+        paddingTop: Platform.select({
+            ios: 15,
+            android: 15,
+            default: 15,
+        }),
+        paddingBottom: Platform.select({
+            ios: 5,
+            android: 5,
+            default: 5,
+        }),
         borderTopLeftRadius: 10,
         borderTopRightRadius: 10,
     },
     restaurantName: {
-        fontSize: 28,
+        fontSize: Platform.select({
+            ios: 28,
+            android: 28,
+            default: 28,
+        }),
         color: '#E95420',
         fontWeight: 'bold',
-        fontFamily: 'Oswald-Bold',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Bold',
+            android: 'Oswald-Bold',
+            default: 'Arial-BoldMT',
+        }),
         marginLeft: 10,
     },
     headerInfoContainer: {
@@ -97,9 +224,21 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-start', // Align items to the start (top)
         backgroundColor: '#222126',
-        paddingHorizontal: 20,
-        paddingTop: 5,
-        paddingBottom: 15,
+        paddingHorizontal: Platform.select({
+            ios: 20,
+            android: 20,
+            default: 20,
+        }),
+        paddingTop: Platform.select({
+            ios: 5,
+            android: 5,
+            default: 5,
+        }),
+        paddingBottom: Platform.select({
+            ios: 15,
+            android: 15,
+            default: 15,
+        }),
     },
     headerInfo: {
         flex: 1,
@@ -107,17 +246,33 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
     orderInfo: {
-        fontSize: 16,
+        fontSize: Platform.select({
+            ios: 16,
+            android: 16,
+            default: 16,
+        }),
         color: '#FFFFFF',
-        fontFamily: 'Arial',
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
         marginVertical: 2,
     },
     closeButton: {
         paddingTop: 0, // Adjust padding to align with text
     },
     contentContainer: {
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        paddingHorizontal: Platform.select({
+            ios: 20,
+            android: 20,
+            default: 20,
+        }),
+        paddingVertical: Platform.select({
+            ios: 10,
+            android: 10,
+            default: 10,
+        }),
     },
     itemsContainer: {
         marginVertical: 10,
@@ -127,25 +282,53 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         width: '100%',
-        paddingVertical: 5,
+        paddingVertical: Platform.select({
+            ios: 5,
+            android: 5,
+            default: 5,
+        }),
     },
     itemName: {
-        fontSize: 16,
+        fontSize: Platform.select({
+            ios: 16,
+            android: 16,
+            default: 16,
+        }),
         color: '#222126',
-        fontFamily: 'Arial',
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
         flex: 3,
     },
     itemQuantity: {
-        fontSize: 18,
+        fontSize: Platform.select({
+            ios: 18,
+            android: 18,
+            default: 18,
+        }),
         color: '#222126',
-        fontFamily: 'Arial',
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
         textAlign: 'left',
         flex: 1,
     },
     itemPrice: {
-        fontSize: 18,
+        fontSize: Platform.select({
+            ios: 18,
+            android: 18,
+            default: 18,
+        }),
         color: '#222126',
-        fontFamily: 'Arial',
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
         textAlign: 'right',
         flex: 1,
     },
@@ -155,16 +338,54 @@ const styles = StyleSheet.create({
         marginVertical: 0,
     },
     total: {
-        fontSize: 18,
+        fontSize: Platform.select({
+            ios: 18,
+            android: 18,
+            default: 18,
+        }),
         color: '#222126',
-        fontFamily: 'Oswald-Medium',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Medium',
+            android: 'Oswald-Medium',
+            default: 'Arial-BoldMT',
+        }),
         textAlign: 'right',
         marginTop: 2,
         marginBottom: 12,
     },
     totalLabel: {
         fontWeight: 'bold',
-        fontFamily: 'Oswald-Bold',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Bold',
+            android: 'Oswald-Bold',
+            default: 'Arial-BoldMT',
+        }),
+    },
+    ratingContainer: {
+        paddingHorizontal: Platform.select({
+            ios: 20,
+            android: 20,
+            default: 20,
+        }),
+        paddingVertical: Platform.select({
+            ios: 10,
+            android: 10,
+            default: 10,
+        }),
+    },
+    sectionTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    starsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 20,
+    },
+    star: {
+        marginHorizontal: 5,
     },
 });
 

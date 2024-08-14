@@ -1,12 +1,14 @@
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DeliveryDetailModal from '../modals/DeliveryDetailModal'; // Assume this modal is similar to OrderHistoryDetailModal
+import { Alert, Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import OrderDetailModal from '../modals/DeliveryDetailModal';
+
+const { width } = Dimensions.get('window'); // Get the screen width
 
 const DeliveriesScreen = () => {
     const [deliveries, setDeliveries] = useState([]);
-    const [selectedDelivery, setSelectedDelivery] = useState(null);
+    const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
@@ -15,7 +17,7 @@ const DeliveriesScreen = () => {
 
     const fetchDeliveries = async () => {
         try {
-            const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/orders?id=1&type=courier`); // Adjusted for courier type
+            const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/orders?id=1&type=courier`);
             const data = await response.json();
             setDeliveries(data);
         } catch (error) {
@@ -24,17 +26,20 @@ const DeliveriesScreen = () => {
         }
     };
 
-    const handleDeliveryPress = (delivery) => {
-        setSelectedDelivery(delivery);
+    const handleOrderPress = (order) => {
+        setSelectedOrder(order);
         setModalVisible(true);
     };
 
-    const handleStatusChange = async (delivery) => {
-        const nextStatus = delivery.status === 'pending' ? 'in progress' : delivery.status === 'in progress' ? 'delivered' : delivery.status;
+    const handleStatusChange = async (order) => {
+        const nextStatus =
+            order.status === 'pending' ? 'in progress' :
+                order.status === 'in progress' ? 'delivered' :
+                    order.status;
 
         try {
-            const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/orders/${delivery.id}/status`, {
-                method: 'PUT',
+            const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/order/${order.id}/status`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -42,7 +47,7 @@ const DeliveriesScreen = () => {
             });
 
             if (response.ok) {
-                fetchDeliveries(); // Refresh the deliveries list after updating status
+                fetchDeliveries(); // Refresh the list after updating status
             } else {
                 Alert.alert('Error', 'Failed to update the status. Please try again.');
             }
@@ -52,13 +57,12 @@ const DeliveriesScreen = () => {
         }
     };
 
-    // Function to extract building number and street from the full address
     const formatAddress = (address) => {
         const parts = address.split(',');
-        return parts[0]; // Return only the building number and street
+        return parts[0];
     };
 
-    const renderDelivery = ({ item }) => (
+    const renderOrder = ({ item }) => (
         <View style={styles.tableRow}>
             <Text style={styles.tableCellId}>{item.id}</Text>
             <Text style={styles.tableCellAddress}>{formatAddress(item.customer_address)}</Text>
@@ -66,15 +70,15 @@ const DeliveriesScreen = () => {
                 style={[
                     styles.tableCellStatus,
                     item.status === 'pending' ? styles.statusPending :
-                    item.status === 'in progress' ? styles.statusInProgress :
-                    styles.statusDelivered,
+                        item.status === 'in progress' ? styles.statusInProgress :
+                            styles.statusDelivered,
                 ]}
                 onPress={() => handleStatusChange(item)}
             >
                 <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-                onPress={() => handleDeliveryPress(item)}
+                onPress={() => handleOrderPress(item)}
                 style={styles.tableCellView}
             >
                 <FontAwesomeIcon icon={faMagnifyingGlassPlus} size={20} color="#222126" />
@@ -87,23 +91,23 @@ const DeliveriesScreen = () => {
             <Text style={styles.pageTitle}>MY DELIVERIES</Text>
             <View style={styles.table}>
                 <View style={styles.tableHeader}>
-                    <Text style={styles.tableHeaderTextId}>ORDER ID</Text>
-                    <Text style={styles.tableHeaderTextAddress}>ADDRESS</Text>
-                    <Text style={styles.tableHeaderTextStatus}>STATUS</Text>
-                    <Text style={styles.tableHeaderTextView}>VIEW</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableCellId]}>ORDER ID</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableCellAddress]}>ADDRESS</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableCellStatus]}>STATUS</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableCellView]}>VIEW</Text>
                 </View>
                 <FlatList
                     data={deliveries}
-                    renderItem={renderDelivery}
+                    renderItem={renderOrder}
                     keyExtractor={item => item.id.toString()}
-                    style={styles.scrollableList} // Added this style to control height and scroll
+                    style={styles.scrollableList}
                 />
             </View>
-            {selectedDelivery && (
-                <DeliveryDetailModal
+            {selectedOrder && (
+                <OrderDetailModal
                     visible={modalVisible}
                     onClose={() => setModalVisible(false)}
-                    deliveryDetail={selectedDelivery}
+                    orderDetail={selectedOrder}
                 />
             )}
         </View>
@@ -113,118 +117,146 @@ const DeliveriesScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF', // Background color
-        paddingHorizontal: 20,
+        backgroundColor: '#FFFFFF',
+        paddingHorizontal: Platform.select({
+            ios: 20,
+            android: 20,
+            default: 20, // Ensure padding is consistent across platforms
+        }),
     },
     pageTitle: {
-        fontSize: 24, 
-        color: '#222126', // Text color
+        fontSize: Platform.select({
+            ios: width * 0.06, // 6% of the screen width
+            android: width * 0.06,
+            default: 24, // Default fallback size
+        }),
+        color: '#222126',
         fontWeight: 'bold',
-        fontFamily: 'Oswald-Regular',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial'
+        }),
         marginTop: 30,
         marginBottom: 20,
         marginLeft: 10,
     },
     table: {
         width: '100%',
-        // borderRadius: 8, 
         overflow: 'hidden',
         flex: 1,
-        
     },
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: '#222126', // Header background color
-        padding: 8,
-        // borderTopLeftRadius: 8,
-        // borderTopRightRadius: 8,
-        alignItems: 'center', // Align items to center
+        backgroundColor: '#222126',
+        paddingVertical: Platform.select({
+            ios: 13,
+            android: 13,
+            default: 13,
+        }),
+        paddingHorizontal: 10,
+        alignItems: 'center',
     },
-    tableHeaderTextId: {
-        flex: 0.5,
-        fontSize: 12,
-        color: '#FFFFFF', // Text color
+    tableHeaderText: {
+        fontSize: Platform.select({
+            ios: width * 0.03, // 3% of the screen width
+            android: width * 0.03,
+            default: 12,
+        }),
+        color: '#FFFFFF',
         fontWeight: 'bold',
-        fontFamily: 'Arial',
-        textAlign: 'center', // Center align text
-    },
-    tableHeaderTextAddress: {
-        flex: 1,
-        fontSize: 12,
-        color: '#FFFFFF', // Text color
-        fontWeight: 'bold',
-        fontFamily: 'Arial',
-        textAlign: 'center', // Center align text
-    },
-    tableHeaderTextStatus: {
-        flex: 2,
-        fontSize: 12,
-        color: '#FFFFFF', // Text color
-        fontWeight: 'bold',
-        fontFamily: 'Arial',
-        textAlign: 'center', // Center align text
-    },
-    tableHeaderTextView: {
-        flex: 0.3,
-        fontSize: 12,
-        color: '#FFFFFF', // Text color
-        fontWeight: 'bold',
-        fontFamily: 'Arial',
-        textAlign: 'center', // Center align text
-        minWidth: 50,
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
+        textAlign: 'center',
     },
     tableRow: {
         flexDirection: 'row',
-        backgroundColor: '#FFFFFF', 
-        padding: 10,
-        alignItems: 'center', // Align items to center
+        backgroundColor: '#FFFFFF',
+        paddingVertical: Platform.select({
+            ios: 10,
+            android: 10,
+            default: 10,
+        }),
+        alignItems: 'center',
     },
     tableCellId: {
-        flex: 0.5,
-        fontSize: 14, 
-        color: '#222126', // Text color
-        fontFamily: 'Arial',
-        textAlign: 'center', // Center align text
+        flex: 1,
+        textAlign: 'center',
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
+        fontSize: Platform.select({
+            ios: width * 0.028, // Slightly smaller size, 2.8% of screen width
+            android: width * 0.028,
+            default: 11, // One size smaller than 12
+        }),
     },
     tableCellAddress: {
-        flex: 1.3,
-        fontSize: 14, 
-        color: '#222126', // Text color
-        fontFamily: 'Arial',
-        textAlign: 'left', // Left align text
-        marginLeft: 20,
-        marginRight: 10
+        flex: 1.6,
+        textAlign: 'center',
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
+        fontSize: Platform.select({
+            ios: width * 0.028, // Slightly smaller size, 2.8% of screen width
+            android: width * 0.028,
+            default: 11, // One size smaller than 12
+        }),
+        maxWidth: 80,
+        paddingRight: Platform.select({
+            ios: 10,
+            android: 10,
+            default: 10,
+        }),
     },
     tableCellStatus: {
         flex: 1.3,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 5,
-        paddingVertical: 5,
-        minWidth: 40,
-        
-    },
-    statusPending: {
-        backgroundColor: '#851919', // Pending status color
-    },
-    statusInProgress: {
-        backgroundColor: '#DA583B', // In Progress status color
-    },
-    statusDelivered: {
-        backgroundColor: '#609475', // Delivered status color
-    },
-    statusText: {
-        fontSize: 14,
-        color: '#FFFFFF', // Text color
-        fontFamily: 'Oswald-Regular',
-        textAlign: 'center', // Center align text
+        paddingVertical: Platform.select({
+            ios: 5,
+            android: 5,
+            default: 5,
+        }),
+        minWidth: 35,
     },
     tableCellView: {
-        flex: 0.05,
+        flex: 0.1,
         justifyContent: 'center',
         alignItems: 'center',
         minWidth: 50,
-        textAlign: 'center', // Center align text
+        paddingLeft: 8,
+    },
+    statusPending: {
+        backgroundColor: '#851919',
+    },
+    statusInProgress: {
+        backgroundColor: '#DA583B',
+    },
+    statusDelivered: {
+        backgroundColor: '#609475',
+    },
+    statusText: {
+        fontSize: Platform.select({
+            ios: width * 0.035, // 3.5% of the screen width
+            android: width * 0.035,
+            default: 14,
+        }),
+        color: '#FFFFFF',
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial',
+        }),
+        textAlign: 'center',
     },
     scrollableList: {
         maxHeight: 400,
