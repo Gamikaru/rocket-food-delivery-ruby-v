@@ -7,13 +7,11 @@ import { Alert, Button, Dimensions, Modal, Platform, StyleSheet, Text, Touchable
 const { width, height } = Dimensions.get('window');
 
 const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
-    // State to hold the current rating, initial average rating, and updated average rating
     const [rating, setRating] = useState(orderDetail.restaurant_rating || 0);
     const [initialAvgRating, setInitialAvgRating] = useState(null);
     const [updatedAvgRating, setUpdatedAvgRating] = useState(null);
 
     useEffect(() => {
-        // Function to fetch initial average rating for the restaurant
         const fetchInitialRating = async () => {
             try {
                 console.log(`Fetching initial rating for restaurant ID: ${orderDetail.restaurant_id}`);
@@ -34,7 +32,6 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
         fetchInitialRating();
     }, [orderDetail.restaurant_id]);
 
-    // Function to handle rating submission
     const submitRating = async () => {
         try {
             console.log(`Submitting rating: ${rating} for order ID: ${orderDetail.id}`);
@@ -152,8 +149,6 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
         </Modal>
     );
 };
-
-
 
 const styles = StyleSheet.create({
     modalContainer: {
