@@ -2,17 +2,20 @@ import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { Alert, Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ContentLoader from 'react-content-loader/native'; // Import ContentLoader
+import { ActivityIndicator, Alert, Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Rect } from 'react-native-svg';
 import OrderHistoryDetailModal from '../modals/OrderHistoryDetailModal';
 
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
 const OrderHistoryScreen = ({ navigation }) => {
-    // State to hold fetched orders and track the selected order for modal display
+    // State to hold fetched orders, track the selected order for modal display, and loading state
     const [orders, setOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [loading, setLoading] = useState(true); // Loading state
 
     // Fetch orders when the component mounts
     useEffect(() => {
@@ -37,6 +40,8 @@ const OrderHistoryScreen = ({ navigation }) => {
             } catch (error) {
                 console.error('Error fetching orders:', error);
                 Alert.alert('Error', 'An error occurred while fetching your order history.');
+            } finally {
+                setLoading(false); // Set loading to false when data fetching is complete
             }
         };
 
@@ -60,6 +65,19 @@ const OrderHistoryScreen = ({ navigation }) => {
         </View>
     );
 
+    // Render content loader while data is being fetched
+    const renderLoader = () => (
+        <ContentLoader
+            width={width}
+            height={height * 0.1}
+            backgroundColor="#f0f0f0"
+            foregroundColor="#ecebeb"
+        >
+            <Rect x="0" y="0" rx="5" ry="5" width="80%" height="20" />
+            <Rect x="0" y="30" rx="5" ry="5" width="60%" height="20" />
+        </ContentLoader>
+    );
+
     return (
         <View style={styles.container}>
             <Text style={styles.pageTitle}>MY ORDERS</Text>
@@ -69,13 +87,20 @@ const OrderHistoryScreen = ({ navigation }) => {
                     <Text style={styles.tableHeaderTextStatus}>STATUS</Text>
                     <Text style={styles.tableHeaderTextView}>VIEW</Text>
                 </View>
-                {/* FlatList to display the list of orders */}
-                <FlatList
-                    data={orders}
-                    renderItem={renderOrder}
-                    keyExtractor={item => item.id.toString()}
-                    style={styles.scrollableList}
-                />
+                {/* Conditionally render loader or the FlatList */}
+                {loading ? (
+                    <View style={styles.loaderContainer}>
+                        <ActivityIndicator size="large" color="#DA583B" />
+                        <Text style={styles.loadingText}>Loading orders...</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={orders}
+                        renderItem={renderOrder}
+                        keyExtractor={item => item.id.toString()}
+                        style={styles.scrollableList}
+                    />
+                )}
             </View>
             {selectedOrder && (
                 <OrderHistoryDetailModal
@@ -178,6 +203,16 @@ const styles = StyleSheet.create({
     scrollableList: {
         maxHeight: height * 0.53,  // Maximum height for scrollable list relative to screen height
     },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: width * 0.045,
+        color: '#222126',
+    }
 });
 
 export default OrderHistoryScreen;

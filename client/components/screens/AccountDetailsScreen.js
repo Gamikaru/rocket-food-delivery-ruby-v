@@ -1,17 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { Alert, Dimensions, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
 // ACCOUNT DETAILS SCREEN COMPONENT: Manages user account information display and update
 const AccountDetailsScreen = () => {
-    // STATE MANAGEMENT: Store user account details and user type
+    // STATE MANAGEMENT: Store user account details, user type, and loading state
     const [primaryEmail, setPrimaryEmail] = useState('');
     const [accountEmail, setAccountEmail] = useState('');
     const [accountPhone, setAccountPhone] = useState('');
     const [userType, setUserType] = useState(null);
+    const [loading, setLoading] = useState(true); // Loading state
 
     // EFFECT: Fetch user details when the component mounts
     useEffect(() => {
@@ -37,6 +38,8 @@ const AccountDetailsScreen = () => {
         } catch (error) {
             console.error('Error fetching user details:', error);
             Alert.alert('Error', 'Unable to fetch account details. Please try again later.');
+        } finally {
+            setLoading(false); // Set loading to false once data fetching is complete
         }
     };
 
@@ -67,11 +70,6 @@ const AccountDetailsScreen = () => {
         const formattedPhoneNumber = formatPhoneNumber(text);
         setAccountPhone(formattedPhoneNumber);
     };
-
-    // RENDER GUARD: Prevent rendering until userType is determined
-    if (!userType) {
-        return null;
-    }
 
     // FUNCTION: Handles saving the updated account details
     const handleSave = async () => {
@@ -107,6 +105,16 @@ const AccountDetailsScreen = () => {
             Alert.alert('Error', 'Unable to update account details. Please try again later.');
         }
     };
+
+    // RENDER GUARD: Show loader until data is fetched
+    if (loading) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#DA583B" />
+                <Text style={styles.loadingText}>Loading account details...</Text>
+            </View>
+        );
+    }
 
     return (
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -226,7 +234,7 @@ const styles = StyleSheet.create({
             android: 'Roboto',  // Uses 'Roboto' on Android
             default: 'sans-serif',  // Fallback font for other platforms
         }),
-        marginTop:  - height * 0.005,  // Negative margin to pull it closer to the input field above
+        marginTop: -height * 0.005,  // Negative margin to pull it closer to the input field above
     },
     button: {
         backgroundColor: '#DA583B',  // Custom orange color for the button
@@ -246,6 +254,16 @@ const styles = StyleSheet.create({
             default: 'sans-serif',  // Fallback font for other platforms
         }),
     },
+    loaderContainer: {
+        flex: 1,  // Takes up the full screen height
+        justifyContent: 'center',  // Center-aligns content vertically
+        alignItems: 'center',  // Center-aligns content horizontally
+    },
+    loadingText: {
+        marginTop: 10,  // Space above the loading text
+        fontSize: width * 0.045,  // Responsive font size
+        color: '#222126',  // Dark text color
+    }
 });
 
 // EXPORT: Make AccountDetailsScreen available for import in other files

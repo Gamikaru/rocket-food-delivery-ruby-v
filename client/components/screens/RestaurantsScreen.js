@@ -1,7 +1,8 @@
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import ContentLoader, { Rect } from 'react-content-loader/native'; // Import ContentLoader
+import { Alert, Dimensions, FlatList, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getAddress } from '../../utils/addressUtils';
 import RestaurantAddressModal from '../modals/RestaurantAddressModal';
 
@@ -16,6 +17,12 @@ import cuisineViet from '../../assets/images/restaurants/cuisineViet.jpg';
 // Extract screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
+// Store common style values in constants for maintainability
+const horizontalPadding = width > 768 ? width * 0.05 : width * 0.065;
+const modalItemPadding = height * 0.025;
+const buttonPaddingVertical = width > 768 ? height * 0.009 : height * 0.012;
+const buttonPaddingHorizontal = width > 768 ? width * 0.02 : width * 0.027;
+
 // Array of all imported images for random selection
 const restaurantImages = [
     cuisineGreek,
@@ -26,15 +33,16 @@ const restaurantImages = [
     cuisineViet,
 ];
 
-// Function to randomly select an image from the array
-const getRandomImage = () => {
-    const randomIndex = Math.floor(Math.random() * restaurantImages.length);
-    return restaurantImages[randomIndex];
-};
-
 // Main component for displaying nearby restaurants with filters and modals
 const RestaurantsScreen = ({ navigation }) => {
-    // State management for restaurants, filters, and modals
+    // Function to randomly select an image from the array
+    // Memoized with useCallback to avoid recalculating unless dependencies change
+    const getRandomImage = useCallback(() => {
+        const randomIndex = Math.floor(Math.random() * restaurantImages.length);
+        return restaurantImages[randomIndex];
+    }, []);
+
+    // State management for restaurants, filters, modals, and loading state
     const [restaurants, setRestaurants] = useState([]); // All restaurants data
     const [filteredRestaurants, setFilteredRestaurants] = useState([]); // Filtered restaurants based on selected criteria
     const [selectedRating, setSelectedRating] = useState(null); // Selected rating filter
@@ -43,6 +51,7 @@ const RestaurantsScreen = ({ navigation }) => {
     const [priceModalVisible, setPriceModalVisible] = useState(false); // Visibility state of the price filter modal
     const [addressModalVisible, setAddressModalVisible] = useState(false); // Visibility state of the address modal
     const [selectedRestaurant, setSelectedRestaurant] = useState(null); // Currently selected restaurant for the address modal
+    const [isLoading, setIsLoading] = useState(true); // State to manage loading
 
     // Fetch restaurants data from the API when the component mounts
     useEffect(() => {
@@ -78,12 +87,14 @@ const RestaurantsScreen = ({ navigation }) => {
                 setFilteredRestaurants(restaurantsWithImages); // Initialize filtered data with all restaurants
             } catch (error) {
                 console.error('Error fetching restaurants:', error);
-                // Handle error appropriately, e.g., display an error message to the user
+                Alert.alert("Error", "Could not fetch restaurants. Please try again later."); // User-friendly error message
+            } finally {
+                setIsLoading(false); // Set loading to false after data is fetched
             }
         };
 
         fetchRestaurants();
-    }, []);
+    }, [getRandomImage]); // Dependency array includes getRandomImage to re-fetch if it changes
 
     // Ensure that filters are applied after data is fetched
     useEffect(() => {
@@ -119,7 +130,7 @@ const RestaurantsScreen = ({ navigation }) => {
     // Function to open the address modal for a specific restaurant
     const openAddressModal = (restaurant) => {
         if (!restaurant || !restaurant.address) {
-            alert('No address information available for this restaurant.');
+            Alert.alert('No Address', 'No address information available for this restaurant.'); // Alert for missing address
             return;
         }
 
@@ -136,7 +147,7 @@ const RestaurantsScreen = ({ navigation }) => {
         setSelectedRestaurant(null); // Clear the selected restaurant
     };
 
-    // Function to render each restaurant in the FlatList
+    // Function to render each restaurant item
     const renderRestaurant = ({ item }) => (
         <TouchableOpacity
             onPress={() =>
@@ -148,31 +159,59 @@ const RestaurantsScreen = ({ navigation }) => {
                 })
             }
             style={styles.restaurantCard}
+            accessibilityLabel={`View menu for ${item.name}`}
+            accessibilityRole="button"
         >
-            <Image source={item.image} style={styles.restaurantImage} />
+            <Image source={item.image} style={styles.restaurantImage} accessibilityLabel={`${item.name} cuisine`} />
             <View style={styles.restaurantInfo}>
-                <Text style={styles.restaurantName}>
-                    {item.name}&nbsp;<Text style={styles.priceRange}>({priceRangeToDollarSigns(item.price_range)})</Text>
+                <Text style={styles.restaurantName} numberOfLines={1} adjustsFontSizeToFit>
+                    {item.name}&nbsp;
+                    <Text style={styles.priceRange} numberOfLines={1}>
+                        ({priceRangeToDollarSigns(item.price_range)})
+                    </Text>
                 </Text>
                 <View style={styles.ratingContainer}>
                     {[...Array(item.rating)].map((_, index) => (
                         <MaterialIcons
                             key={index}
-                            name='star'
-                            size={styles.filterButtonText.fontSize} // Match the size to the dollar signs
-                            color='#000000'
+                            name="star"
+                            size={styles.filterButtonText.fontSize}
+                            color="#000000"
+                            accessibilityLabel="Star"
                         />
                     ))}
                 </View>
 
                 {/* Pin button to show the restaurant's address */}
                 <View style={styles.pinButtonContainer}>
-                    <TouchableOpacity style={styles.pinButton} onPress={() => openAddressModal(item)}>
-                        <FontAwesome name='map-marker' style={styles.pinIcon} />
+                    <TouchableOpacity
+                        style={styles.pinButton}
+                        onPress={() => openAddressModal(item)}
+                        accessibilityLabel={`Show address for ${item.name}`}
+                        accessibilityRole="button"
+                    >
+                        <FontAwesome name="map-marker" style={styles.pinIcon} />
                     </TouchableOpacity>
                 </View>
             </View>
         </TouchableOpacity>
+    );
+
+    // Function to render skeleton loaders while data is being fetched
+    const renderSkeletonLoader = () => (
+        <ContentLoader
+            speed={2}
+            width={width * 0.48}
+            height={height * 0.26}
+            viewBox={`0 0 ${width * 0.48} ${height * 0.26}`}
+            backgroundColor="#f3f3f3"
+            foregroundColor="#ecebeb"
+        >
+            <Rect x="0" y="0" rx="10" ry="10" width="100%" height="50%" />
+            <Rect x="0" y="55%" rx="5" ry="5" width="70%" height="10%" />
+            <Rect x="0" y="70%" rx="5" ry="5" width="50%" height="10%" />
+            <Rect x="0" y="85%" rx="5" ry="5" width="50%" height="10%" />
+        </ContentLoader>
     );
 
     // Convert price range number to dollar signs (e.g., 1 to $, 2 to $$, 3 to $$$)
@@ -188,17 +227,23 @@ const RestaurantsScreen = ({ navigation }) => {
                 {/* Rating Filter */}
                 <View style={styles.filterGroup}>
                     <Text style={styles.filterTitle}>Rating</Text>
-                    <TouchableOpacity style={styles.filterButton} onPress={() => setRatingModalVisible(true)}>
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => setRatingModalVisible(true)}
+                        accessibilityLabel="Filter by rating"
+                        accessibilityRole="button"
+                    >
                         <View style={styles.filterButtonContent}>
                             {selectedRating ? (
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     {[...Array(selectedRating)].map((_, index) => (
                                         <MaterialIcons
                                             key={index}
-                                            name='star'
-                                            size={styles.filterButtonText.fontSize} // Match the size to the text
-                                            color='#FFFFFF'
+                                            name="star"
+                                            size={styles.filterButtonText.fontSize}
+                                            color="#FFFFFF"
                                             style={styles.iconSpacing}
+                                            accessibilityLabel="Selected star rating"
                                         />
                                     ))}
                                 </View>
@@ -206,7 +251,7 @@ const RestaurantsScreen = ({ navigation }) => {
                                 <Text style={styles.filterButtonText}>-- Select --</Text>
                             )}
                             <View style={{ width: 8 }} />
-                            <FontAwesome name='caret-down' size={styles.filterButtonText.fontSize} color='#FFFFFF' />
+                            <FontAwesome name="caret-down" size={styles.filterButtonText.fontSize} color="#FFFFFF" />
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -214,13 +259,18 @@ const RestaurantsScreen = ({ navigation }) => {
                 {/* Price Filter */}
                 <View style={styles.filterGroup}>
                     <Text style={styles.filterTitle}>Price</Text>
-                    <TouchableOpacity style={styles.filterButton} onPress={() => setPriceModalVisible(true)}>
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => setPriceModalVisible(true)}
+                        accessibilityLabel="Filter by price range"
+                        accessibilityRole="button"
+                    >
                         <View style={styles.filterButtonContent}>
                             <Text style={styles.filterButtonText}>
                                 {selectedPrice ? selectedPrice : '-- Select --'}
                             </Text>
                             <View style={{ width: 8 }} />
-                            <FontAwesome name='caret-down' size={styles.filterButtonText.fontSize} color='#FFFFFF' />
+                            <FontAwesome name="caret-down" size={styles.filterButtonText.fontSize} color="#FFFFFF" />
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -228,23 +278,45 @@ const RestaurantsScreen = ({ navigation }) => {
 
             {/* Restaurants Section */}
             <Text style={styles.sectionTitle}>RESTAURANTS</Text>
-            <FlatList
-                data={filteredRestaurants}
-                renderItem={renderRestaurant}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={[
-                    styles.menuList,
-                    { paddingRight: width > 768 ? width * 0.05 : width * 0.065 },
-                ]}
-                numColumns={2} // Display restaurants in a grid with 2 columns
-            />
+            {isLoading ? (
+                <FlatList
+                    data={[...Array(10).keys()]}
+                    renderItem={renderSkeletonLoader}
+                    keyExtractor={(item) => item.toString()}
+                    contentContainerStyle={[
+                        styles.menuList,
+                        { paddingRight: horizontalPadding },
+                    ]}
+                    numColumns={2}
+                    getItemLayout={(data, index) => (
+                        { length: height * 0.26, offset: height * 0.26 * index, index }
+                    )}
+                    accessibilityLabel="Loading list of restaurants"
+                />
+            ) : (
+                <FlatList
+                    data={filteredRestaurants}
+                    renderItem={renderRestaurant}
+                    keyExtractor={(item) => item.id.toString()}
+                    contentContainerStyle={[
+                        styles.menuList,
+                        { paddingRight: horizontalPadding },
+                    ]}
+                    numColumns={2}
+                    getItemLayout={(data, index) => (
+                        { length: height * 0.26, offset: height * 0.26 * index, index }
+                    )}
+                    accessibilityLabel="List of restaurants"
+                />
+            )}
 
             {/* Rating Modal */}
             <Modal
                 visible={ratingModalVisible}
                 transparent={true}
-                animationType='slide'
+                animationType="slide"
                 onRequestClose={() => setRatingModalVisible(false)}
+                accessibilityViewIsModal={true}
             >
                 <View style={styles.modalContainer}>
                     <TouchableOpacity
@@ -253,6 +325,8 @@ const RestaurantsScreen = ({ navigation }) => {
                             setSelectedRating(null);
                             setRatingModalVisible(false);
                         }}
+                        accessibilityLabel="Show all ratings"
+                        accessibilityRole="button"
                     >
                         <Text style={styles.modalText}>All</Text>
                     </TouchableOpacity>
@@ -264,10 +338,12 @@ const RestaurantsScreen = ({ navigation }) => {
                                 setSelectedRating(rating);
                                 setRatingModalVisible(false);
                             }}
+                            accessibilityLabel={`Filter by ${rating} star rating`}
+                            accessibilityRole="button"
                         >
                             <View style={{ flexDirection: 'row' }}>
                                 {[...Array(rating)].map((_, index) => (
-                                    <MaterialIcons key={index} name='star' size={width * 0.06} color='#222126' />
+                                    <MaterialIcons key={index} name="star" size={width * 0.06} color="#222126" />
                                 ))}
                             </View>
                         </TouchableOpacity>
@@ -279,8 +355,9 @@ const RestaurantsScreen = ({ navigation }) => {
             <Modal
                 visible={priceModalVisible}
                 transparent={true}
-                animationType='slide'
+                animationType="slide"
                 onRequestClose={() => setPriceModalVisible(false)}
+                accessibilityViewIsModal={true}
             >
                 <View style={styles.modalContainer}>
                     <TouchableOpacity
@@ -289,6 +366,8 @@ const RestaurantsScreen = ({ navigation }) => {
                             setSelectedPrice(null);
                             setPriceModalVisible(false);
                         }}
+                        accessibilityLabel="Show all price ranges"
+                        accessibilityRole="button"
                     >
                         <Text style={styles.modalText}>All</Text>
                     </TouchableOpacity>
@@ -300,6 +379,8 @@ const RestaurantsScreen = ({ navigation }) => {
                                 setSelectedPrice(price);
                                 setPriceModalVisible(false);
                             }}
+                            accessibilityLabel={`Filter by ${price} price range`}
+                            accessibilityRole="button"
                         >
                             <Text style={styles.modalText}>{price}</Text>
                         </TouchableOpacity>
@@ -311,8 +392,9 @@ const RestaurantsScreen = ({ navigation }) => {
             <Modal
                 visible={addressModalVisible}
                 transparent={true}
-                animationType='slide'
+                animationType="slide"
                 onRequestClose={closeAddressModal}
+                accessibilityViewIsModal={true}
             >
                 <RestaurantAddressModal restaurant={selectedRestaurant} onClose={closeAddressModal} />
             </Modal>
@@ -325,7 +407,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1, // Occupy full height of the screen
         backgroundColor: '#FFFFFF', // White background color
-        paddingHorizontal: width > 768 ? width * 0.05 : width * 0.067, // Responsive horizontal padding
+        paddingHorizontal: horizontalPadding, // Responsive horizontal padding
         marginTop: height > 800 ? -height * 0.025 : 0, // Adjust top margin for taller screens
     },
 
@@ -371,8 +453,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#DA583B', // Button background color
-        paddingVertical: width > 768 ? height * 0.009 : height * 0.012,
-        paddingHorizontal: width > 768 ? width * 0.02 : width * 0.027,
+        paddingVertical: buttonPaddingVertical, // Responsive vertical padding
+        paddingHorizontal: buttonPaddingHorizontal, // Responsive horizontal padding
         borderRadius: height * 0.006,
         width: '100%',
         marginBottom: height * 0.01,
@@ -499,7 +581,7 @@ const styles = StyleSheet.create({
     },
     modalItem: {
         backgroundColor: '#FFFFFF', // White background for modal item
-        padding: height * 0.025, // Padding around content
+        padding: modalItemPadding, // Padding around content
         marginVertical: height * 0.006, // Vertical margin
         borderRadius: height * 0.01, // Rounded corners
         width: width > 360 ? '80%' : '90%', // Responsive width

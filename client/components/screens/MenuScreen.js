@@ -1,5 +1,6 @@
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
+import ContentLoader, { Rect } from 'react-content-loader/native';
 import { Dimensions, FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import OrderModal from '../modals/OrderModal';
 
@@ -10,15 +11,18 @@ const { width, height } = Dimensions.get('window');
 const MenuScreen = ({ route, navigation }) => {
     const { restaurantId, restaurantName, priceRange, rating } = route.params;
 
-    // STATE MANAGEMENT: Holds menu items, order details, modal visibility, and order button state
+    // STATE MANAGEMENT: Holds menu items, order details, modal visibility, order button state, loading, and error message
     const [menuItems, setMenuItems] = useState([]);
     const [order, setOrder] = useState({});
     const [modalVisible, setModalVisible] = useState(false);
     const [isOrderButtonEnabled, setIsOrderButtonEnabled] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState('');
 
     // EFFECT: Fetch menu items from the API when the component mounts
     useEffect(() => {
         const fetchMenuItems = async () => {
+            setIsLoading(true);
             try {
                 const baseUrl = process.env.EXPO_PUBLIC_URL; // Use environment variable for the base URL
                 const url = `${baseUrl}/api/products?restaurant=${restaurantId}`;
@@ -38,8 +42,12 @@ const MenuScreen = ({ route, navigation }) => {
                 }, {});
                 setOrder(initialOrder);
                 setIsOrderButtonEnabled(false); // Initially disable the order button
+                setErrorMessage(''); // Clear any previous error messages on success
             } catch (error) {
                 console.error('Error fetching menu items:', error.message);
+                setErrorMessage('Failed to load menu items. Please try again.');
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -64,15 +72,41 @@ const MenuScreen = ({ route, navigation }) => {
                 <Text style={styles.menuItemDescription}>Lorem ipsum dolor sit amet.</Text>
             </View>
             <View style={styles.menuItemControls}>
-                <TouchableOpacity onPress={() => updateQuantity(item.id, -1)} style={styles.quantityButton}>
+                <TouchableOpacity
+                    onPress={() => updateQuantity(item.id, -1)}
+                    style={styles.quantityButton}
+                    accessibilityLabel={`Decrease quantity of ${item.name}`}
+                    accessibilityHint={`Double tap to decrease the quantity of ${item.name}`}
+                >
                     <FontAwesome name="minus" size={12} color="#FFFFFF" />
                 </TouchableOpacity>
                 <Text style={styles.menuItemQuantity}>{order[item.id] || 0}</Text>
-                <TouchableOpacity onPress={() => updateQuantity(item.id, 1)} style={styles.quantityButton}>
+                <TouchableOpacity
+                    onPress={() => updateQuantity(item.id, 1)}
+                    style={styles.quantityButton}
+                    accessibilityLabel={`Increase quantity of ${item.name}`}
+                    accessibilityHint={`Double tap to increase the quantity of ${item.name}`}
+                >
                     <FontAwesome name="plus" size={12} color="#FFFFFF" />
                 </TouchableOpacity>
             </View>
         </View>
+    );
+
+    // FUNCTION: Renders a skeleton loader while menu items are being fetched
+    const renderSkeletonLoader = () => (
+        <ContentLoader
+            speed={2}
+            width={width}
+            height={height * 0.14}
+            backgroundColor="#f3f3f3"
+            foregroundColor="#ecebeb"
+        >
+            <Rect x="0" y="0" rx="5" ry="5" width={width * 0.27} height={height * 0.14} />
+            <Rect x={width * 0.30} y="10" rx="4" ry="4" width={width * 0.60} height="13" />
+            <Rect x={width * 0.30} y="30" rx="3" ry="3" width={width * 0.40} height="10" />
+            <Rect x={width * 0.30} y="50" rx="3" ry="3" width={width * 0.30} height="10" />
+        </ContentLoader>
     );
 
     // FUNCTION: Converts price range number to dollar signs (e.g., 1 to $, 2 to $$, 3 to $$$)
@@ -106,18 +140,43 @@ const MenuScreen = ({ route, navigation }) => {
                     style={[styles.orderButton, { backgroundColor: isOrderButtonEnabled ? '#DA583B' : '#CCCCCC' }]}
                     onPress={() => setModalVisible(true)}
                     disabled={!isOrderButtonEnabled}
+                    accessibilityLabel="Create Order"
+                    accessibilityHint="Double tap to create your order"
                 >
                     <Text style={styles.orderButtonText}>Create Order</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* MENU LIST */}
-            <FlatList
-                data={menuItems}
-                renderItem={renderMenuItem}
-                keyExtractor={item => item.id.toString()}
-                contentContainerStyle={[styles.menuList, { paddingRight: 15 }]} // Add paddingRight here as well
-            />
+            {/* MENU LIST OR LOADING/ERROR STATES */}
+            {isLoading ? (
+                <FlatList
+                    data={[...Array(10).keys()]}  // Render skeleton loaders
+                    renderItem={renderSkeletonLoader}
+                    keyExtractor={(item) => item.toString()}
+                    contentContainerStyle={[styles.menuList, { paddingRight: 15 }]}
+                    initialNumToRender={10}  // Initial items to render
+                    maxToRenderPerBatch={10}  // Number of items to render in one batch
+                    windowSize={5}  // Number of items to keep in memory outside of viewable area
+                />
+            ) : errorMessage ? (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{errorMessage}</Text>
+                    <TouchableOpacity onPress={() => fetchMenuItems()}>
+                        <Text style={styles.retryButton}>Retry</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <FlatList
+                    data={menuItems}
+                    renderItem={renderMenuItem}
+                    keyExtractor={item => item.id.toString()}
+                    contentContainerStyle={[styles.menuList, { paddingRight: 15 }]}
+                    initialNumToRender={10}  // Initial items to render
+                    maxToRenderPerBatch={10}  // Number of items to render in one batch
+                    windowSize={5}  // Number of items to keep in memory outside of viewable area
+                />
+            )}
+
             <OrderModal
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
@@ -278,6 +337,22 @@ const styles = StyleSheet.create({
             android: 'Oswald-Regular',
             default: 'Arial-BoldMT',
         }),  // Use Oswald-Regular on iOS/Android, Arial-BoldMT on other platforms
+    },
+    errorContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+    },
+    errorText: {
+        fontSize: width * 0.045,
+        color: '#DA583B',
+        textAlign: 'center',
+        marginBottom: height * 0.02,
+    },
+    retryButton: {
+        color: '#DA583B',
+        fontSize: width * 0.04,
+        textDecorationLine: 'underline',
     },
 });
 
