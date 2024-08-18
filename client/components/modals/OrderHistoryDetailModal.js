@@ -2,24 +2,26 @@ import { FontAwesome } from '@expo/vector-icons';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Dimensions, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+// GET DEVICE DIMENSIONS TO CALCULATE SCALING FACTORS
 const { width, height } = Dimensions.get('window');
 
+// ORDER HISTORY DETAIL MODAL COMPONENT
 const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
+    // STATE FOR STORING THE CURRENT RATING, INITIAL AVERAGE RATING, AND UPDATED AVERAGE RATING
     const [rating, setRating] = useState(orderDetail.restaurant_rating || 0);
     const [initialAvgRating, setInitialAvgRating] = useState(null);
     const [updatedAvgRating, setUpdatedAvgRating] = useState(null);
 
+    // FETCH THE INITIAL AVERAGE RATING OF THE RESTAURANT WHEN THE MODAL OPENS
     useEffect(() => {
         const fetchInitialRating = async () => {
             try {
-                console.log(`Fetching initial rating for restaurant ID: ${orderDetail.restaurant_id}`);
                 const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/restaurants?id=${orderDetail.restaurant_id}`);
                 if (response.ok) {
                     const restaurant = await response.json();
                     const matchingRestaurant = restaurant.find(rest => rest.id === orderDetail.restaurant_id);
-                    console.log('Initial restaurant data:', matchingRestaurant);
                     setInitialAvgRating(matchingRestaurant?.rating);
                 } else {
                     console.error('Failed to fetch initial rating.');
@@ -32,9 +34,14 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
         fetchInitialRating();
     }, [orderDetail.restaurant_id]);
 
+    // HANDLE STAR RATING PRESS TO TOGGLE OR SET THE RATING
+    const handleStarPress = (star) => {
+        setRating(star === rating ? star - 1 : star);
+    };
+
+    // SUBMIT THE RATING AND FETCH THE UPDATED AVERAGE RATING AFTER A DELAY
     const submitRating = async () => {
         try {
-            console.log(`Submitting rating: ${rating} for order ID: ${orderDetail.id}`);
             const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/order/${orderDetail.id}/rating`, {
                 method: 'POST',
                 headers: {
@@ -44,19 +51,15 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
             });
 
             if (response.ok) {
-                console.log(`Rating submitted successfully for order ID: ${orderDetail.id}.`);
+                await new Promise(resolve => setTimeout(resolve, 4000)); // Wait 4 seconds before fetching updated rating
 
-                // Add a 4-second delay before fetching the updated rating
-                await new Promise(resolve => setTimeout(resolve, 4000));
-
-                console.log(`Fetching updated rating for restaurant ID: ${orderDetail.restaurant_id}`);
                 const updatedResponse = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/restaurants?id=${orderDetail.restaurant_id}`);
                 if (updatedResponse.ok) {
                     const updatedRestaurant = await updatedResponse.json();
                     const matchingRestaurant = updatedRestaurant.find(rest => rest.id === orderDetail.restaurant_id);
-                    console.log('Fetched Updated Restaurant Data:', updatedRestaurant);
                     setUpdatedAvgRating(matchingRestaurant?.rating);
 
+                    // Show success or no change alert based on whether the average rating changed
                     if (initialAvgRating !== matchingRestaurant?.rating) {
                         Alert.alert('Success', `Your rating has been submitted. The average rating changed from ${initialAvgRating} to ${matchingRestaurant?.rating}.`);
                     } else {
@@ -66,7 +69,7 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
                     console.error('Failed to fetch updated rating.');
                 }
 
-                onClose();  // Close the modal after submission
+                onClose(); // Close the modal after submission
             } else {
                 Alert.alert('Error', 'Failed to submit rating. Please try again later.');
             }
@@ -86,63 +89,62 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
             <View style={styles.modalContainer}>
                 <View style={styles.outerBorder}>
                     <View style={styles.modalContent}>
-                        {/* Modal Header with Restaurant Name */}
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.restaurantName}>{orderDetail.restaurant_name}</Text>
-                        </View>
-                        {/* Header Info with Order Date, Status, and Courier */}
-                        <View style={styles.headerInfoContainer}>
-                            <View style={styles.headerInfo}>
+                        <ScrollView contentContainerStyle={styles.ScrollViewContent}>
+                            <View style={styles.headerContainer}>
+                                <Text style={styles.restaurantName}>{orderDetail.restaurant_name}</Text>
                                 <Text style={styles.orderInfo}>Order Date: {new Date(orderDetail.created_at).toLocaleDateString()}</Text>
                                 <Text style={styles.orderInfo}>Status: {orderDetail.status.toUpperCase()}</Text>
                                 <Text style={styles.orderInfo}>Courier: {orderDetail.courier_name || 'N/A'}</Text>
+                                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                                    <FontAwesomeIcon icon={faX} style={styles.closeIcon} size={width * 0.06} />
+                                </TouchableOpacity>
                             </View>
-                            {/* Close Button */}
-                            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                                <FontAwesomeIcon icon={faX} size={24} color="grey" />
-                            </TouchableOpacity>
-                        </View>
-                        {/* Content with Ordered Items and Total Cost */}
-                        <View style={styles.contentContainer}>
-                            <View style={styles.itemsContainer}>
-                                {orderDetail.products.map(item => (
-                                    <View key={item.product_id} style={styles.itemRow}>
-                                        <Text style={styles.itemName}>{item.product_name}</Text>
-                                        <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-                                        <Text style={styles.itemPrice}>$ {(item.total_cost / 100).toFixed(2)}</Text>
-                                    </View>
-                                ))}
+
+                            {/* CONTENT WITH ORDERED ITEMS AND TOTAL COST */}
+                            <View style={styles.contentContainer}>
+                                <View style={styles.itemsContainer}>
+                                    {orderDetail.products.map(item => (
+                                        <View key={item.product_id} style={styles.itemRow}>
+                                            <Text style={styles.itemName}>{item.product_name}</Text>
+                                            <Text style={styles.itemQuantity}>x {item.quantity}</Text>
+                                            <Text style={styles.itemPrice}>$ {(item.total_cost / 100).toFixed(2)}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                                <View style={styles.separator} />
+                                <Text style={styles.total}>
+                                    <Text style={styles.totalLabel}>TOTAL: </Text>
+                                    $ {((orderDetail.total_cost || 0) / 100).toFixed(2)}
+                                </Text>
                             </View>
-                            <View style={styles.separator} />
-                            <Text style={styles.total}>
-                                <Text style={styles.totalLabel}>TOTAL: </Text>
-                                $ {((orderDetail.total_cost || 0) / 100).toFixed(2)}
-                            </Text>
-                        </View>
-                        {/* Rating Section */}
-                        <View style={styles.ratingContainer}>
-                            <Text style={styles.sectionTitle}>Rate Your Order</Text>
-                            <View style={styles.starsContainer}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity
-                                        key={star}
-                                        onPress={() => setRating(star)}
-                                    >
-                                        <FontAwesome
-                                            name={star <= rating ? 'star' : 'star-o'}
-                                            size={30}
-                                            color="#FFD700"
-                                            style={styles.star}
-                                        />
-                                    </TouchableOpacity>
-                                ))}
+
+                            {/* RATING SECTION */}
+                            <View style={styles.ratingContainer}>
+                                <Text style={styles.sectionTitle}>Rate Your Order</Text>
+                                <View style={styles.starsContainer}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <TouchableOpacity
+                                            key={star}
+                                            onPress={() => handleStarPress(star)}
+                                        >
+                                            <FontAwesome
+                                                name={star <= rating ? 'star' : 'star-o'}
+                                                style={styles.starIcon}
+                                            />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                <View style={styles.separatorLine} />
+                                <TouchableOpacity
+                                    style={styles.submitButton}
+                                    onPress={submitRating}
+                                    disabled={rating === 0}
+                                >
+                                    <Text style={styles.submitButtonText}>Submit Rating</Text>
+                                </TouchableOpacity>
                             </View>
-                            <Button
-                                title="Submit Rating"
-                                onPress={submitRating}
-                                disabled={rating === 0}
-                            />
-                        </View>
+                        </ScrollView>
                     </View>
                 </View>
             </View>
@@ -150,237 +152,189 @@ const OrderHistoryDetailModal = ({ visible, onClose, orderDetail }) => {
     );
 };
 
+// STYLES FOR THE ORDERHISTORYDETAILMODAL
 const styles = StyleSheet.create({
     modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        flex: 1, // Make the modal container fill the entire screen
+        justifyContent: 'center', // Center the modal content vertically
+        alignItems: 'center', // Center the modal content horizontally
+        backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent background color to darken the background
     },
     outerBorder: {
         width: '90%',
         borderRadius: 10,
         backgroundColor: '#FFFFFF',
-        padding: Platform.select({
-            ios: 8,
-            android: 8,
-            default: 8, // White border thickness
-        }),
-        marginTop: Platform.select({
-            ios: height * 0.15,
-            android: height * 0.15,
-            default: height * 0.15, // Centered vertically
-        }),
+        padding: width * 0.02,
     },
     modalContent: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 10,
-        overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: '#EEEEEE', // Thin grey border
+        backgroundColor: '#FFFFFF', // Set background color to white
+        borderRadius: 10, // Round the corners of the modal content
+        overflow: 'hidden', // Ensure content does not overflow out of the container
+        borderWidth: 2, // Add a thin border
+        borderColor: '#EEEEEE', // Light grey color for the border
     },
-    modalHeader: {
-        backgroundColor: '#222126',
-        paddingHorizontal: Platform.select({
-            ios: 20,
-            android: 20,
-            default: 20,
-        }),
-        paddingTop: Platform.select({
-            ios: 15,
-            android: 15,
-            default: 15,
-        }),
-        paddingBottom: Platform.select({
-            ios: 5,
-            android: 5,
-            default: 5,
-        }),
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+    headerContainer: {
+        backgroundColor: '#222126', // Dark background for the entire header
+        paddingHorizontal: width * 0.05, // Horizontal padding for the entire header
+        paddingVertical: height * 0.02, // Vertical padding for the entire header
+        borderTopLeftRadius: 10, // Round the top-left corner
+        borderTopRightRadius: 10, // Round the top-right corner
+        position: 'relative', // Allows the use of absolute positioning within the container
     },
     restaurantName: {
-        fontSize: Platform.select({
-            ios: 28,
-            android: 28,
-            default: 28,
-        }),
-        color: '#E95420',
-        fontWeight: 'bold',
+        fontSize: width * 0.075, // Font size for the restaurant name relative to screen width
+        color: '#DA583B', // Custom orange color for the restaurant name
+        fontWeight: 'bold', // Make the text bold
         fontFamily: Platform.select({
             ios: 'Oswald-Bold',
             android: 'Oswald-Bold',
             default: 'Arial-BoldMT',
         }),
-        marginLeft: 10,
-    },
-    headerInfoContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start', // Align items to the start (top)
-        backgroundColor: '#222126',
-        paddingHorizontal: Platform.select({
-            ios: 20,
-            android: 20,
-            default: 20,
-        }),
-        paddingTop: Platform.select({
-            ios: 5,
-            android: 5,
-            default: 5,
-        }),
-        paddingBottom: Platform.select({
-            ios: 15,
-            android: 15,
-            default: 15,
-        }),
-    },
-    headerInfo: {
-        flex: 1,
-        marginLeft: 10,
-        marginBottom: 5,
+        marginBottom: height * 0.01, // Add a margin below the restaurant name to separate it from the order info
     },
     orderInfo: {
-        fontSize: Platform.select({
-            ios: 16,
-            android: 16,
-            default: 16,
-        }),
-        color: '#FFFFFF',
+        fontSize: width * 0.035, // Font size for order information relative to screen width
+        color: '#FFFFFF', // White color for the text
         fontFamily: Platform.select({
             ios: 'Arial',
             android: 'Arial',
             default: 'Arial',
         }),
-        marginVertical: 2,
+        marginBottom: height * 0.003, // Add vertical margin below each order info
+    },
+    headerInfo: {
+        flex: 1, // Allow the header info to take up the remaining space
+        marginLeft: width * 0.03, // Add margin to the left relative to screen width
+        marginBottom: height * 0.01, // Add margin to the bottom relative to screen height
     },
     closeButton: {
-        paddingTop: 0, // Adjust padding to align with text
+        position: 'absolute', // Position the button absolutely within the header container
+        top: height * 0.08, // Position the button 1/3rd from the top of the header (adjust as necessary)
+        right: width * 0.06, // Position the button on the right side with some margin
+        fontSize: width * 0.08, // Increase the size of the close icon relative to screen width
+    },
+    closeIcon: {
+        color: 'grey', // Grey color for the close icon
     },
     contentContainer: {
-        paddingHorizontal: Platform.select({
-            ios: 20,
-            android: 20,
-            default: 20,
-        }),
-        paddingVertical: Platform.select({
-            ios: 10,
-            android: 10,
-            default: 10,
-        }),
+        paddingHorizontal: width * 0.05, // Horizontal padding inside the content container relative to screen width
+        paddingVertical: height * 0.02, // Vertical padding inside the content container relative to screen height
     },
     itemsContainer: {
-        marginVertical: 10,
+        marginVertical: height * 0.015, // Vertical margin around the items container relative to screen height
     },
     itemRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
-        paddingVertical: Platform.select({
-            ios: 5,
-            android: 5,
-            default: 5,
-        }),
+        flexDirection: 'row', // Arrange the item details in a horizontal row
+        justifyContent: 'space-between', // Space out the content evenly
+        alignItems: 'center', // Center align the content within the row
+        width: '100%', // Make the row span the full width of the container
+        paddingVertical: height * 0.01, // Vertical padding inside the row relative to screen height
     },
     itemName: {
-        fontSize: Platform.select({
-            ios: 16,
-            android: 16,
-            default: 16,
-        }),
-        color: '#222126',
+        fontSize: width * 0.042, // Font size for the item name relative to screen width
+        color: '#222126', // Dark color for the item name text
         fontFamily: Platform.select({
             ios: 'Arial',
             android: 'Arial',
             default: 'Arial',
-        }),
-        flex: 3,
+        }), // Use Arial font on all platforms
+        flex: 3, // Allow the item name to take up more space within the row
     },
     itemQuantity: {
-        fontSize: Platform.select({
-            ios: 18,
-            android: 18,
-            default: 18,
-        }),
-        color: '#222126',
+        fontSize: width * 0.042, // Font size for the item quantity relative to screen width
+        color: '#222126', // Dark color for the item quantity text
         fontFamily: Platform.select({
             ios: 'Arial',
             android: 'Arial',
             default: 'Arial',
-        }),
-        textAlign: 'left',
-        flex: 1,
+        }), // Use Arial font on all platforms
+        textAlign: 'left', // Align the text to the left
+        flex: 1, // Allow the item quantity to take up less space within the row
     },
     itemPrice: {
-        fontSize: Platform.select({
-            ios: 18,
-            android: 18,
-            default: 18,
-        }),
-        color: '#222126',
+        fontSize: width * 0.042, // Font size for the item price relative to screen width
+        color: '#222126', // Dark color for the item price text
         fontFamily: Platform.select({
             ios: 'Arial',
             android: 'Arial',
             default: 'Arial',
-        }),
-        textAlign: 'right',
-        flex: 1,
+        }), // Use Arial font on all platforms
+        textAlign: 'right', // Align the text to the right
+        flex: 1, // Allow the item price to take up less space within the row
     },
     separator: {
-        borderBottomColor: '#000000',
-        borderBottomWidth: 1,
-        marginVertical: 0,
+        borderBottomColor: '#A9A9A9', // Black color for the separator line
+        borderBottomWidth: 1, // Thickness of the separator line
+        marginVertical: 0, // No vertical margin around the separator
     },
     total: {
-        fontSize: Platform.select({
-            ios: 18,
-            android: 18,
-            default: 18,
-        }),
-        color: '#222126',
+        fontSize: width * 0.048, // Font size for the total amount relative to screen width
+        color: '#222126', // Dark color for the total amount text
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Oswald-Regular',
+            default: 'Arial-BoldMT',
+        }), // Use Oswald-Medium on iOS/Android, Arial-BoldMT on other platforms
+        textAlign: 'right', // Align the text to the right
+        marginTop: height * 0.003, // Add margin to the top relative to screen height
+        marginBottom: height * 0.02, // Add margin to the bottom relative to screen height
+    },
+    totalLabel: {
+        fontWeight: 'bold', // Make the text bold
+        fontFamily: Platform.select({
+            ios: 'Oswald-Bold',
+            android: 'Oswald-Bold',
+            default: 'Arial-BoldMT',
+        }), // Use Oswald-Bold on iOS/Android, Arial-BoldMT on other platforms
+    },
+    ratingContainer: {
+        paddingHorizontal: width * 0.05, // Horizontal padding inside the rating container relative to screen width
+        paddingVertical: height * 0.02, // Vertical padding inside the rating container relative to screen height
+    },
+    sectionTitle: {
+        fontSize: width * 0.06, // Font size for the section title relative to screen width
         fontFamily: Platform.select({
             ios: 'Oswald-Medium',
             android: 'Oswald-Medium',
             default: 'Arial-BoldMT',
-        }),
-        textAlign: 'right',
-        marginTop: 2,
-        marginBottom: 12,
-    },
-    totalLabel: {
-        fontWeight: 'bold',
-        fontFamily: Platform.select({
-            ios: 'Oswald-Bold',
-            android: 'Oswald-Bold',
-            default: 'Arial-BoldMT',
-        }),
-    },
-    ratingContainer: {
-        paddingHorizontal: Platform.select({
-            ios: 20,
-            android: 20,
-            default: 20,
-        }),
-        paddingVertical: Platform.select({
-            ios: 10,
-            android: 10,
-            default: 10,
-        }),
-    },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginBottom: 15,
-        textAlign: 'center',
+        }), // Use Oswald-Medium on iOS/Android, Arial-BoldMT on other platforms
+        marginBottom: height * 0.02, // Add margin to the bottom relative to screen height
+        textAlign: 'center', // Center align the text
+        color: '#DA583B', // Custom orange color for the section title
     },
     starsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginBottom: 20,
+        flexDirection: 'row', // Arrange the stars in a horizontal row
+        justifyContent: 'center', // Center align the stars within the container
+        marginBottom: height * 0.03, // Add margin to the bottom relative to screen height
     },
-    star: {
-        marginHorizontal: 5,
+    starIcon: {
+        fontSize: width * 0.08, // Font size for the star icon relative to screen width
+        color: '#222126', // Dark color for the star icons
+        marginHorizontal: width * 0.01, // Horizontal margin around each star relative to screen width
+    },
+    separatorLine: {
+        borderBottomColor: '#A9A9A9', // Black color for the separator line
+        borderBottomWidth: 1, // Thickness of the separator line
+        marginVertical: height * 0.015, // Vertical margin around the separator relative to screen height
+        marginHorizontal: width * 0.05, // Horizontal margin around the separator relative to screen width
+    },
+    submitButton: {
+        backgroundColor: '#DA583B', // Custom orange color for the button background
+        paddingVertical: height * 0.010, // Vertical padding inside the button relative to screen height
+        marginBottom: height * 0.02, // Add margin to the bottom relative to screen height
+        marginHorizontal: width * 0.05, // Add horizontal margin relative to screen width
+        borderRadius: 5, // Round the corners of the button
+        alignItems: 'center', // Center align the content within the button
+    },
+    submitButtonText: {
+        color: '#FFFFFF', // White color for the button text
+        fontSize: width * 0.05, // Font size for the button text relative to screen width
+        fontFamily: Platform.select({
+            ios: 'Oswald-Regular',
+            android: 'Arial-MT',
+            default: 'Arial-MT',
+        }), // Use Oswald-Regular on iOS/Android, Arial-MT on other platforms
+        textTransform: 'uppercase', // Transform text to uppercase
     },
 });
 

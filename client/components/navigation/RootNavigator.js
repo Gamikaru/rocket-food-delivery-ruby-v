@@ -1,6 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack'; // Importing the stack navigator from React Navigation
 import React from 'react'; // Importing React
-import AccountSelectionScreen from '../screens/AccountSelectionScreen'; // Importing the new Account Selection screen
+import AccountSelectionScreen from '../screens/AccountSelectionScreen'; // Importing the Account Selection screen
 import AppNavigator from './AppNavigator'; // Importing the main App Navigator
 import AuthNavigator from './AuthNavigator'; // Importing the Authentication Navigator
 
@@ -10,16 +10,16 @@ const RootStack = createStackNavigator();
 const RootNavigator = () => {
     return (
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
-            {/* Authentication screens */}
+            {/* Screen for the authentication flow */}
             <RootStack.Screen name="Auth" component={AuthNavigator} />
 
-            {/* Main app screens */}
+            {/* Screen for the main application flow */}
             <RootStack.Screen name="App" component={AppNavigator} />
 
-            {/* Account selection screen for users with both Customer and Courier accounts */}
+            {/* Screen for account selection when the user has both Customer and Courier accounts */}
             <RootStack.Screen name="AccountSelection" component={AccountSelectionScreen} />
         </RootStack.Navigator>
     );
 };
 
-export default RootNavigator; // Exporting the root navigator for use in the application
+export default RootNavigator; // Exporting the RootNavigator for use in the application

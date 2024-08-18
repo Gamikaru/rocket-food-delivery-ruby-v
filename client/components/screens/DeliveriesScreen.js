@@ -4,17 +4,22 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import OrderDetailModal from '../modals/DeliveryDetailModal';
 
-const { width } = Dimensions.get('window'); // Get the screen width
+// Get screen dimensions for responsive design
+const { width, height } = Dimensions.get('window');
 
+// DELIVERIES SCREEN COMPONENT: Manages delivery orders display and status updates
 const DeliveriesScreen = () => {
+    // STATE MANAGEMENT: Store deliveries, selected order, and modal visibility
     const [deliveries, setDeliveries] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
+    // EFFECT: Fetch deliveries when the component mounts
     useEffect(() => {
         fetchDeliveries();
     }, []);
 
+    // FUNCTION: Fetches deliveries data from the API
     const fetchDeliveries = async () => {
         try {
             const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/orders?id=1&type=courier`);
@@ -26,16 +31,15 @@ const DeliveriesScreen = () => {
         }
     };
 
+    // FUNCTION: Handles press on an order to display its details in a modal
     const handleOrderPress = (order) => {
         setSelectedOrder(order);
         setModalVisible(true);
     };
 
+    // FUNCTION: Handles status change of an order
     const handleStatusChange = async (order) => {
-        const nextStatus =
-            order.status === 'pending' ? 'in progress' :
-                order.status === 'in progress' ? 'delivered' :
-                    order.status;
+        const nextStatus = getNextStatus(order.status);
 
         try {
             const response = await fetch(`${process.env.EXPO_PUBLIC_URL}/api/order/${order.id}/status`, {
@@ -57,11 +61,22 @@ const DeliveriesScreen = () => {
         }
     };
 
-    const formatAddress = (address) => {
-        const parts = address.split(',');
-        return parts[0];
+    // FUNCTION: Determines the next status in the order lifecycle
+    const getNextStatus = (currentStatus) => {
+        switch (currentStatus) {
+            case 'pending':
+                return 'in progress';
+            case 'in progress':
+                return 'delivered';
+            default:
+                return currentStatus;
+        }
     };
 
+    // FUNCTION: Formats address to show only the first part (before the first comma)
+    const formatAddress = (address) => address.split(',')[0];
+
+    // FUNCTION: Renders each order in the list
     const renderOrder = ({ item }) => (
         <View style={styles.tableRow}>
             <Text style={styles.tableCellId}>{item.id}</Text>
@@ -69,9 +84,7 @@ const DeliveriesScreen = () => {
             <TouchableOpacity
                 style={[
                     styles.tableCellStatus,
-                    item.status === 'pending' ? styles.statusPending :
-                        item.status === 'in progress' ? styles.statusInProgress :
-                            styles.statusDelivered,
+                    getStatusStyle(item.status),
                 ]}
                 onPress={() => handleStatusChange(item)}
             >
@@ -81,21 +94,39 @@ const DeliveriesScreen = () => {
                 onPress={() => handleOrderPress(item)}
                 style={styles.tableCellView}
             >
-                <FontAwesomeIcon icon={faMagnifyingGlassPlus} size={20} color="#222126" />
+                <View style={styles.iconContainer}>
+                    <FontAwesomeIcon icon={faMagnifyingGlassPlus} size={width * 0.05} color="#222126" />
+                </View>
             </TouchableOpacity>
         </View>
     );
+
+    // FUNCTION: Returns the corresponding style based on order status
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'pending':
+                return styles.statusPending;
+            case 'in progress':
+                return styles.statusInProgress;
+            case 'delivered':
+                return styles.statusDelivered;
+            default:
+                return {};
+        }
+    };
 
     return (
         <View style={styles.container}>
             <Text style={styles.pageTitle}>MY DELIVERIES</Text>
             <View style={styles.table}>
+                {/* TABLE HEADER */}
                 <View style={styles.tableHeader}>
-                    <Text style={[styles.tableHeaderText, styles.tableCellId]}>ORDER ID</Text>
-                    <Text style={[styles.tableHeaderText, styles.tableCellAddress]}>ADDRESS</Text>
-                    <Text style={[styles.tableHeaderText, styles.tableCellStatus]}>STATUS</Text>
-                    <Text style={[styles.tableHeaderText, styles.tableCellView]}>VIEW</Text>
+                    <Text style={styles.headerTextId}>ORDER ID</Text>
+                    <Text style={styles.headerTextAddress}>ADDRESS</Text>
+                    <Text style={styles.headerTextStatus}>STATUS</Text>
+                    <Text style={styles.headerTextView}>VIEW</Text>
                 </View>
+                {/* DELIVERY LIST */}
                 <FlatList
                     data={deliveries}
                     renderItem={renderOrder}
@@ -103,6 +134,7 @@ const DeliveriesScreen = () => {
                     style={styles.scrollableList}
                 />
             </View>
+            {/* ORDER DETAIL MODAL */}
             {selectedOrder && (
                 <OrderDetailModal
                     visible={modalVisible}
@@ -114,152 +146,165 @@ const DeliveriesScreen = () => {
     );
 }
 
+// STYLES: Define styles for various components used in the screen
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-        paddingHorizontal: Platform.select({
-            ios: 20,
-            android: 20,
-            default: 20, // Ensure padding is consistent across platforms
-        }),
+        flex: 1,  // Ensures the container takes up the full screen height
+        backgroundColor: '#FFFFFF',  // White background color for the screen
+        paddingHorizontal: width * 0.053,  // Padding as a percentage of screen width for consistency
     },
     pageTitle: {
-        fontSize: Platform.select({
-            ios: width * 0.06, // 6% of the screen width
-            android: width * 0.06,
-            default: 24, // Default fallback size
-        }),
-        color: '#222126',
-        fontWeight: 'bold',
+        fontSize: width * 0.07,  // Font size relative to screen width
+        color: '#222126',  // Dark grey text color
+        fontWeight: 'bold',  // Bold font weight for emphasis
         fontFamily: Platform.select({
-            ios: 'Oswald-Regular',
-            android: 'Oswald-Regular',
-            default: 'Arial'
+            ios: 'Oswald-Regular',  // 'Oswald-Regular' on iOS
+            android: 'Oswald-Regular',  // 'Oswald-Regular' on Android
+            default: 'Arial',  // Fallback font for other platforms
         }),
-        marginTop: 30,
-        marginBottom: 20,
-        marginLeft: 10,
+        marginTop: height * 0.037,  // Top margin relative to screen height
+        marginBottom: height * 0.025,  // Bottom margin relative to screen height
+        marginLeft: width * 0.027,  // Left margin relative to screen width
     },
     table: {
-        width: '100%',
-        overflow: 'hidden',
-        flex: 1,
+        width: '100%',  // Table width takes up full container width
+        overflow: 'hidden',  // Prevent content overflow
+        flex: 1,  // Allows the table to expand vertically
     },
     tableHeader: {
-        flexDirection: 'row',
-        backgroundColor: '#222126',
-        paddingVertical: Platform.select({
-            ios: 13,
-            android: 13,
-            default: 13,
-        }),
-        paddingHorizontal: 10,
-        alignItems: 'center',
+        flexDirection: 'row',  // Arrange header elements in a horizontal row
+        backgroundColor: '#222126',  // Dark background for the header
+        paddingVertical: height * 0.016,  // Vertical padding relative to screen height
+        paddingHorizontal: width * 0.027,  // Horizontal padding relative to screen width
+        alignItems: 'center',  // Center align header content vertically
     },
-    tableHeaderText: {
-        fontSize: Platform.select({
-            ios: width * 0.03, // 3% of the screen width
-            android: width * 0.03,
-            default: 12,
-        }),
-        color: '#FFFFFF',
-        fontWeight: 'bold',
+    headerTextId: {
+        flex: 0.9,  // Flex value to control width relative to other header elements
+        fontSize: width * 0.03,  // Font size relative to screen width
+        color: '#FFFFFF',  // White text color for contrast against dark background
+        fontWeight: 'bold',  // Bold font weight for emphasis
         fontFamily: Platform.select({
             ios: 'Arial',
             android: 'Arial',
             default: 'Arial',
         }),
-        textAlign: 'center',
+        textAlign: 'center',  // Center align text horizontally
+        maxWidth: width * 0.15,  // Restrict the maximum width of the header element
+    },
+    headerTextAddress: {
+        flex: 2,  // Flex value to control width relative to other header elements
+        fontSize: width * 0.03,  // Font size relative to screen width
+        color: '#FFFFFF',  // White text color for contrast against dark background
+        fontWeight: 'bold',  // Bold font weight for emphasis
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
+        textAlign: 'center',  // Center align text horizontally
+        maxWidth: width * 0.3,  // Restrict the maximum width of the header element
+    },
+    headerTextStatus: {
+        flex: 1.2,  // Flex value to control width relative to other header elements
+        fontSize: width * 0.03,  // Font size relative to screen width
+        color: '#FFFFFF',  // White text color for contrast against dark background
+        fontWeight: 'bold',  // Bold font weight for emphasis
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
+        textAlign: 'center',  // Center align text horizontally
+        maxWidth: width * 0.22,  // Restrict the maximum width of the header element
+    },
+    headerTextView: {
+        flex: 0.5,  // Flex value to control width relative to other header elements
+        fontSize: width * 0.03,  // Font size relative to screen width
+        color: '#FFFFFF',  // White text color for contrast against dark background
+        fontWeight: 'bold',  // Bold font weight for emphasis
+        fontFamily: Platform.select({
+            ios: 'Arial',
+            android: 'Arial',
+            default: 'Arial',
+        }),
+        textAlign: 'center',  // Center align text horizontally
+        maxWidth: width * 0.15,  // Restrict the maximum width of the header element
+        marginLeft: width * 0.015,  // Left margin relative to screen width
     },
     tableRow: {
-        flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
-        paddingVertical: Platform.select({
-            ios: 10,
-            android: 10,
-            default: 10,
-        }),
-        alignItems: 'center',
+        flexDirection: 'row',  // Arrange row elements in a horizontal row
+        backgroundColor: '#FFFFFF',  // White background color for the row
+        paddingVertical: height * 0.013,  // Vertical padding relative to screen height
+        alignItems: 'center',  // Center align row content vertically
     },
     tableCellId: {
-        flex: 1,
-        textAlign: 'center',
+        flex: 0.9,  // Flex value to control width relative to other row elements
+        textAlign: 'center',  // Center align text horizontally
         fontFamily: Platform.select({
             ios: 'Arial',
             android: 'Arial',
             default: 'Arial',
         }),
-        fontSize: Platform.select({
-            ios: width * 0.028, // Slightly smaller size, 2.8% of screen width
-            android: width * 0.028,
-            default: 11, // One size smaller than 12
-        }),
+        fontSize: width * 0.035,  // Font size relative to screen width
+        maxWidth: width * 0.2  // Restrict the maximum width of the cell
     },
     tableCellAddress: {
-        flex: 1.6,
-        textAlign: 'center',
+        flex: 2,  // Flex value to control width relative to other row elements
+        textAlign: 'center',  // Center align text horizontally
         fontFamily: Platform.select({
             ios: 'Arial',
             android: 'Arial',
             default: 'Arial',
         }),
-        fontSize: Platform.select({
-            ios: width * 0.028, // Slightly smaller size, 2.8% of screen width
-            android: width * 0.028,
-            default: 11, // One size smaller than 12
-        }),
-        maxWidth: 80,
-        paddingRight: Platform.select({
-            ios: 10,
-            android: 10,
-            default: 10,
-        }),
+        fontSize: width * 0.03,  // Font size relative to screen width
+        paddingHorizontal: width * 0.027,  // Horizontal padding relative to screen width
+        maxWidth: width * 0.25,  // Restrict the maximum width of the cell
+        flexWrap: 'wrap',  // Ensure the text wraps within the cell
     },
     tableCellStatus: {
-        flex: 1.3,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 5,
-        paddingVertical: Platform.select({
-            ios: 5,
-            android: 5,
-            default: 5,
-        }),
-        minWidth: 35,
+        flex: 1.2,  // Flex value to control width relative to other row elements
+        justifyContent: 'center',  // Center align content horizontally
+        alignItems: 'center',  // Center align content vertically
+        borderRadius: height * 0.006,  // Slightly rounded corners relative to screen height
+        paddingVertical: height * 0.007,  // Vertical padding relative to screen height
+        textAlign: 'center',  // Center align text horizontally
+        maxWidth: width * 0.4  // Restrict the maximum width of the cell
     },
     tableCellView: {
-        flex: 0.1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        minWidth: 50,
-        paddingLeft: 8,
+        flex: 0.5,  // Flex value to control width relative to other row elements
+        justifyContent: 'center',  // Center align content horizontally
+        alignItems: 'center',  // Center align content vertically
+        textAlign: 'center',  // Center align text horizontally
+        maxWidth: width * 0.15,  // Restrict the maximum width of the cell
+        marginLeft: width * 0.027,  // Left margin relative to screen width
+    },
+    iconContainer: {
+        justifyContent: 'center',  // Center align content horizontally
+        alignItems: 'center',  // Center align content vertically
+        width: width * 0.1,  // Width relative to screen width
+        height: height * 0.04,  // Height relative to screen height
     },
     statusPending: {
-        backgroundColor: '#851919',
+        backgroundColor: '#851919',  // Background color for 'pending' status
     },
     statusInProgress: {
-        backgroundColor: '#DA583B',
+        backgroundColor: '#DA583B',  // Background color for 'in progress' status
     },
     statusDelivered: {
-        backgroundColor: '#609475',
+        backgroundColor: '#609475',  // Background color for 'delivered' status
     },
     statusText: {
-        fontSize: Platform.select({
-            ios: width * 0.035, // 3.5% of the screen width
-            android: width * 0.035,
-            default: 14,
-        }),
-        color: '#FFFFFF',
+        fontSize: width * 0.035,  // Font size relative to screen width
+        color: '#FFFFFF',  // White text color for contrast against colored background
         fontFamily: Platform.select({
             ios: 'Oswald-Regular',
             android: 'Oswald-Regular',
             default: 'Arial',
         }),
-        textAlign: 'center',
+        textAlign: 'center',  // Center align text horizontally
     },
     scrollableList: {
-        maxHeight: 400,
+        maxHeight: height * 0.53,  // Restrict maximum height to allow scrolling
     },
 });
 
