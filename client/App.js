@@ -1,13 +1,15 @@
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faCoffee, faHamburger, faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import { faHamburger, faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 import RootNavigator from './components/navigation/RootNavigator';
 
+// Prevent the splash screen from auto-hiding until the fonts are loaded
 SplashScreen.preventAutoHideAsync();
 
+// Font loading function
 const fetchFonts = () => {
   return Font.loadAsync({
     'Oswald-Bold': require('./assets/fonts/Oswald-Bold.ttf'),
@@ -23,23 +25,29 @@ const fetchFonts = () => {
   });
 };
 
-library.add(faCoffee, faHamburger, faMagnifyingGlassPlus);
+// Add FontAwesome icons to the library for global use
+library.add(faHamburger, faMagnifyingGlassPlus);
 
 const App = () => {
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
-    const loadFonts = async () => {
-      await fetchFonts();
-      setFontsLoaded(true);
-      await SplashScreen.hideAsync();
+    const loadResources = async () => {
+      try {
+        await fetchFonts();
+        setFontsLoaded(true);
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        await SplashScreen.hideAsync();
+      }
     };
 
-    loadFonts();
+    loadResources();
   }, []);
 
   if (!fontsLoaded) {
-    return null; // Render nothing until the fonts are loaded
+    return null; // Render nothing until fonts are loaded
   }
 
   return (
