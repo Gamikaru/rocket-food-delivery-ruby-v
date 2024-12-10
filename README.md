@@ -1,83 +1,225 @@
-### Background Research
+# Rocket Food Delivery: A React Native Restaurant Delivery App – Full-Stack Overview
 
-#### 1. Difference Between Native and Cross-Platform Mobile Applications
+This repository contains both the **frontend (React Native/Expo)** and **backend (Ruby on Rails)** components of the Restaurant Delivery App. The application enables customers and couriers to interact with a restaurant delivery ecosystem, including browsing restaurants and menus, placing orders, updating orders and delivery statuses, managing account details, and more.
 
-**Native Mobile Applications:**
-- **Definition**: Native applications are developed specifically for a particular platform (iOS, Android) using platform-specific languages like Swift for iOS and Kotlin/Java for Android.
-- **Advantages**:
-  - **Performance**: Native apps are optimized for the specific platform, offering better performance, responsiveness, and smooth animations.
-  - **Access to Device Features**: Native apps have full access to all device features (camera, GPS, sensors, etc.) without any restrictions.
-  - **User Experience**: Native apps offer a better user experience as they adhere to platform-specific design guidelines.
-- **Disadvantages**:
-  - **Development Cost**: Separate codebases are needed for each platform, increasing development time and cost.
-  - **Maintenance**: Maintaining and updating multiple codebases can be more challenging.
+[![Watch the demo](https://img.youtube.com/vi/Ufwg7X6MCzo/hqdefault.jpg)](https://youtu.be/Ufwg7X6MCzo)
 
-**Cross-Platform Mobile Applications:**
-- **Definition**: Cross-platform applications are developed using a single codebase that runs on multiple platforms (iOS, Android). Frameworks like React Native, Flutter, and Xamarin are commonly used.
-- **Advantages**:
-  - **Cost Efficiency**: A single codebase reduces development time and cost, making it more cost-effective.
-  - **Faster Development**: Development is faster since the code can be shared across platforms.
-  - **Maintenance**: Easier maintenance as updates and changes only need to be made in one codebase.
-- **Disadvantages**:
-  - **Performance**: Cross-platform apps might not perform as well as native apps, especially for resource-intensive tasks.
-  - **Access to Device Features**: While most device features are accessible, some may require platform-specific coding or third-party plugins.
-  - **User Experience**: It may be challenging to achieve the same level of user experience as native apps due to differences in platform guidelines.
+## Table of Contents
 
-#### 2. Difference Between React Native and React
+- [Rocket Food Delivery: A React Native Restaurant Delivery App – Full-Stack Overview](#rocket-food-delivery-a-react-native-restaurant-delivery-app--full-stack-overview)
+  - [Table of Contents](#table-of-contents)
+  - [Key Features](#key-features)
+  - [Technology Stack](#technology-stack)
+  - [Project Structure](#project-structure)
+  - [Core Functionality](#core-functionality)
+  - [Getting Started](#getting-started)
+  - [Environment Variables](#environment-variables)
+  - [Running the Application](#running-the-application)
+  - [Building for Production](#building-for-production)
+  - [Backend: Additional Details](#backend-additional-details)
+  - [Frontend: Additional Details](#frontend-additional-details)
+  - [Testing](#testing)
+  - [Further Improvements](#further-improvements)
 
-**React Native:**
-- **Definition**: React Native is a framework for building mobile applications using React. It allows developers to use React along with native platform capabilities to build mobile apps for iOS and Android from a single codebase.
-- **Key Features**:
-  - **Native Components**: React Native uses native components instead of web components, providing a more native feel to the application.
-  - **Performance**: While not as fast as fully native apps, React Native offers better performance than many other cross-platform frameworks.
-  - **Hot Reloading**: Developers can see the results of the latest changes almost instantly, improving the development experience.
-  - **Access to Native Modules**: React Native allows access to native modules and platform-specific APIs through bridging, making it easier to integrate native functionalities.
-- **Usage**: Best suited for mobile app development where code reusability and efficiency are critical.
+## Key Features
 
-**React:**
-- **Definition**: React (or React.js) is a JavaScript library for building user interfaces, primarily for web applications. It allows developers to create large web applications that can update and render efficiently in response to data changes.
-- **Key Features**:
-  - **Virtual DOM**: React uses a virtual DOM to optimize rendering and improve performance.
-  - **Component-Based Architecture**: React encourages building encapsulated components that manage their own state and can be composed to build complex UIs.
-  - **Declarative Syntax**: React makes it easy to create interactive UIs with its declarative approach, where the UI reflects the current state of the data.
-  - **Ecosystem**: React has a rich ecosystem of tools, libraries, and frameworks (like Redux for state management) that enhance its capabilities.
-- **Usage**: Primarily used for building dynamic and interactive user interfaces for web applications.
+- **User Authentication & Account Types**:
+  - Users log in and can be customers or couriers.
+  - Multi-account support allows users to switch roles (if applicable).
 
-#### 3. Overview of the Functionalities of the Mobile App
+- **Restaurant & Menu Management**:
+  - View nearby restaurants, filter by rating/price.
+  - Browse restaurant menus and select items for orders.
 
-**Rocket Food Delivery Mobile App Functionalities:**
-- **Login and Authentication**:
-  - Users can log in using their credentials. Successful login redirects to the restaurant page.
-- **Restaurant Listing**:
-  - Displays a list of restaurants with options to filter by rating and price.
-  - Users can select a restaurant to view its menu and place orders.
-- **Menu and Order Management**:
-  - Users can view a restaurant's menu, adjust item quantities, and create orders.
-  - Order confirmation and management through a modal interface.
-- **Order History**:
-  - Users can view their past orders and see details about each order.
+- **Order Processing & Tracking**:
+  - Customers: Place orders, view order history, and rate restaurants.
+  - Couriers: View assigned deliveries and update order status (pending → in progress → delivered).
 
-**Additional Features**:
-- **Header and Footer Navigation**: Present throughout the app (except the login screen) for easy access to various sections.
-- **Responsive Design**: The app follows the provided wireframe for consistent styling across iOS and Android devices.
-- **API Integration**: The app uses various API endpoints for authentication, restaurant data retrieval, and order processing.
+- **Account Management**:
+  - Update account details such as email and phone number.
 
-#### 4. Plan for Which APIs Should Be Utilized
+- **Maps & Addresses**:
+  - Display restaurant locations on a map with custom styling.
+  - Integrate dynamic addresses and map markers.
 
-**APIs Utilized in the Rocket Food Delivery Mobile App:**
-- **Authentication API**:
-  - **Endpoint**: `/login`
-  - **Usage**: To authenticate users and retrieve tokens needed for accessing other parts of the app.
-- **Restaurant API**:
-  - **Endpoint**: `/restaurants`
-  - **Usage**: To fetch a list of restaurants, including details like name, rating, price, and images.
-- **Menu API**:
-  - **Endpoint**: `/restaurants/:id/menu`
-  - **Usage**: To fetch the menu for a specific restaurant. The app displays this data and allows users to place orders.
-- **Order API**:
-  - **Endpoint**: `/orders`
-  - **Usage**: To create and manage orders. This includes placing an order, viewing order history, and order status.
-- **Order History API**:
-  - **Endpoint**: `/orders/history`
-  - **Usage**: To retrieve the user's order history, allowing them to view past orders and their details.
+## Technology Stack
+
+**Frontend:**
+- **React Native / Expo**: For building the mobile application.
+- **React Navigation**: For stack and tab navigation.
+- **AsyncStorage**: For storing user tokens and preferences.
+- **ContentLoader**: For skeleton loading states.
+- **FontAwesome / MaterialIcons**: For icons.
+
+**Backend:**
+- **Ruby on Rails (7.x)**: For building RESTful APIs and handling database operations.
+- **Ruby (3.1.x)**: Language runtime.
+- **SQLite3**: Default database in development/testing (easily swapped for PostgreSQL/MySQL in production).
+- **Devise**: Authentication and user management.
+- **Faker**, **Rack CORS**, **Twilio**, **HTTParty**: For seeding data, handling CORS, and external integrations.
+
+## Project Structure
+
+```
+project-root/
+├─ client/              # Frontend (React Native, Expo)
+│  ├─ App.js
+│  ├─ components/
+│  ├─ screens/
+│  ├─ navigation/
+│  ├─ utils/
+│  ├─ styles/
+│  └─ ... other frontend files
+│
+└─ server/              # Backend (Ruby on Rails)
+   ├─ app/
+   ├─ config/
+   ├─ db/
+   ├─ test/
+   ├─ Gemfile
+   └─ ... other backend files
+```
+
+**Frontend Key Directories:**
+- `components/navigation`: Navigation stack/tabs.
+- `components/screens`: UI screens for login, restaurants, menu, order history, etc.
+- `utils/`: Helpers for address handling.
+- `styles/`: Map styling and general styles.
+
+**Backend Key Directories:**
+- `app/controllers/api`: Controllers returning JSON responses.
+- `app/models`: Database models and relationships.
+- `db/migrate`: Database migrations.
+- `test/`: Automated tests for controllers and models.
+
+## Core Functionality
+
+**Frontend Flow:**
+1. **LoginScreen**: Authenticate users.
+2. **AccountSelectionScreen**: If multiple account types, choose Customer or Courier mode.
+3. **Customer Mode**:
+   - **Restaurants**: Browse/filter restaurants, view addresses.
+   - **Menu**: Select items and create orders.
+   - **OrderHistory**: View and rate past orders.
+   - **AccountDetails**: Update contact info.
+
+4. **Courier Mode**:
+   - **Deliveries**: View assigned deliveries and update their status.
+   - **AccountDetails**: Update courier contact info.
+
+**Backend Flow:**
+1. **Authentication (`POST /api/auth`)**: Validates user credentials.
+2. **Account Management (`GET`/`POST /api/account/:id`)**: Retrieve/update user account details.
+3. **Data Endpoints (`GET /api/restaurants`, `GET /api/products`)**: Fetch restaurant and product data.
+4. **Orders (`POST /api/orders`, `GET /api/orders`, `POST /api/order/:id/status`)**: Create and manage orders, update statuses, and submit ratings.
+
+## Getting Started
+
+**Prerequisites:**
+- **Node.js & npm**: For the frontend.
+- **Expo CLI**: `npm install -g expo-cli`.
+- **Ruby & Rails**: Install Ruby (3.1.x) and Rails.
+- **SQLite3**: Default DB for backend development.
+
+**Installation Steps:**
+1. Clone the repository.
+2. **Backend**:
+   - Navigate to `server/` directory.
+   - Run `bundle install`.
+   - Prepare the database: `rails db:drop db:create db:migrate db:seed`.
+   - Start the Rails server: `rails server`.
+
+3. **Frontend**:
+   - Navigate to `client/` directory.
+   - Run `npm install`.
+   - Set up `.env` with `EXPO_PUBLIC_URL` pointing to your backend server.
+   - Start the Expo dev server: `npx expo start`.
+
+## Environment Variables
+
+**Backend**:
+- Adjust `config/environments/development.rb` to allow ngrok URLs if testing on a remote device.
+- Use `.ruby-version` and `Gemfile` to ensure correct Ruby version.
+
+**Frontend**:
+- Create a `.env` file in `client/` directory.
+- Set `EXPO_PUBLIC_URL=<your-backend-url>` (e.g., local `http://localhost:3000` or ngrok URL).
+
+## Running the Application
+
+1. **Backend**:
+   ```bash
+   cd server
+   rails server
+   ```
+   Access at `http://localhost:3000`.
+
+2. **Frontend**:
+   ```bash
+   cd client
+   npx expo start
+   ```
+   Scan the QR code with Expo Go or run on a simulator.
+
+## Building for Production
+
+**Backend**:
+- Consider using PostgreSQL or MySQL in production.
+- Deploy to services like Heroku, Render, or AWS.
+
+**Frontend**:
+- Use EAS (Expo Application Services) or Expo build service:
+  ```bash
+  eas build --platform android
+  eas build --platform ios
+  ```
+
+## Backend: Additional Details
+
+**Core Endpoints:**
+- `POST /api/auth`: Authenticate users.
+- `GET /api/account/:id?type=customer/courier`: Retrieve account details.
+- `POST /api/account/:id`: Update account info.
+- `GET /api/restaurants`: List restaurants.
+- `GET /api/products?restaurant=:id`: Filter products by restaurant.
+- `POST /api/orders`: Create order.
+- `GET /api/orders?id=:id&type=customer/courier`: Retrieve user-related orders.
+- `POST /api/order/:id/status`: Update order status.
+- `POST /api/order/:id/rating`: Submit order rating.
+
+**Models Overview:**
+- `User` (Devise)
+- `Customer` & `Courier` linked to `User`
+- `Restaurant`, `Product`, `Order`, `OrderStatus`, `ProductOrder`, `Address`
+
+**Testing Backend:**
+```bash
+cd server
+rails test
+```
+
+## Frontend: Additional Details
+
+**Navigation Structure:**
+- **RootNavigator**: Decides between Auth or App flow.
+- **AuthNavigator**: Contains `LoginScreen`.
+- **AppNavigator**: Contains tabs for customers or couriers.
+- **TabNavigator**: Displays different tabs based on user type.
+- **RestaurantsStackNavigator**: Navigates from Restaurants to Menu.
+
+**Styling & Theming:**
+- Custom fonts and styling.
+- Custom map styles for a unique look.
+
+## Testing
+
+**Backend Tests**: Located in `server/test/`. Run with `rails test`.
+**Frontend**: Manual testing via Expo. Add Jest/React Native Testing Library for automated tests if needed.
+
+## Further Improvements
+
+- **Full JWT-based Authentication**: For stateless mobile API access.
+- **Improved Push Notifications**: Real-time updates for order status.
+- **Advanced Caching & Performance**: Redis caching, background jobs for processing.
+- **Enhanced Logging & Monitoring**: Integrations with tools like Lograge, New Relic.
 
