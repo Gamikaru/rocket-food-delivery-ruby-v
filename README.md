@@ -19,7 +19,6 @@ This repository contains both the **frontend (React Native/Expo)** and **backend
   - [Backend: Additional Details](#backend-additional-details)
   - [Frontend: Additional Details](#frontend-additional-details)
   - [Testing](#testing)
-  - [Further Improvements](#further-improvements)
 
 ## Key Features
 
@@ -208,18 +207,13 @@ rails test
 - **RestaurantsStackNavigator**: Navigates from Restaurants to Menu.
 
 **Styling & Theming:**
-- Custom fonts and styling.
-- Custom map styles for a unique look.
+- TailwindCSS.
+- Custom and dynamic map styles for a unique look and interactive feel.
 
 ## Testing
 
 **Backend Tests**: Located in `server/test/`. Run with `rails test`.
 **Frontend**: Manual testing via Expo. Add Jest/React Native Testing Library for automated tests if needed.
 
-## Further Improvements
 
-- **Full JWT-based Authentication**: For stateless mobile API access.
-- **Improved Push Notifications**: Real-time updates for order status.
-- **Advanced Caching & Performance**: Redis caching, background jobs for processing.
-- **Enhanced Logging & Monitoring**: Integrations with tools like Lograge, New Relic.
 
